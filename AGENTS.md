@@ -155,6 +155,12 @@ npm run typecheck && npm run lint && npm run format:check && npm test && npm run
 - Commit once per completed spec task; stage only the files that task touched.
 - Never amend or rebase published commits, never force-push, never commit secrets or local paths.
 
+### Versioning
+
+- The app version in `package.json` tracks the latest **implemented** spec: `0.<spec minor>.<patch>` (base spec `v-0.0` shipped as `0.0.0`).
+- Implementing `specs/v-0.x-<topic>.md` bumps the minor to `x` in that spec's final task (e.g. `v-0.1-dark-theme.md` → `0.1.0`); the patch digit is for contract-neutral fixes.
+- `--version` reads `package.json` at runtime — never hardcode the version in source.
+
 ### Specs convention
 
 - `specs/v-0.0-base.md` is frozen once implemented. New behavior changes append `specs/v-0.x-<topic>.md` (monotonic version, e.g. `v-0.1-dark-theme.md`), referencing the FR contracts they change and using the same task format.
