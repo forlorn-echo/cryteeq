@@ -3,6 +3,8 @@ import type { Comment, FilePayload } from "../../shared/types";
 import { CommentThread } from "./CommentThread";
 import { LineRow } from "./LineRow";
 
+const WINDOW_CHUNK = 500;
+
 interface FileViewerProps {
   file: FilePayload;
   commentsByLine: Map<number, Comment[]>;
@@ -20,15 +22,44 @@ export function FileViewer({
   onUpdate,
   onDelete,
 }: FileViewerProps) {
+  const needsWindowing =
+    file.lines.length > 20000 || file.content.length > 5_000_000;
+  const [visible, setVisible] = useState(
+    needsWindowing ? WINDOW_CHUNK : file.lines.length,
+  );
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [composerLine, setComposerLine] = useState<number | null>(null);
   const initialized = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    initialized.current = false;
+    setExpanded(new Set());
+    setComposerLine(null);
+    setVisible(needsWindowing ? WINDOW_CHUNK : file.lines.length);
+  }, [file, needsWindowing]);
 
   useEffect(() => {
     if (initialized.current || commentsByLine.size === 0) return;
     initialized.current = true;
-    setExpanded(new Set(commentsByLine.keys()));
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      for (const line of commentsByLine.keys()) next.add(line);
+      return next;
+    });
   }, [commentsByLine]);
+
+  useEffect(() => {
+    const element = sentinelRef.current;
+    if (!element) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setVisible((prev) => Math.min(prev + WINDOW_CHUNK, file.lines.length));
+      }
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [visible, file.lines.length]);
 
   const toggleLine = (line: number) => {
     setExpanded((prev) => {
@@ -57,7 +88,7 @@ export function FileViewer({
 
   return (
     <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 text-sm">
-      {file.lines.map((tokens, index) => {
+      {file.lines.slice(0, visible).map((tokens, index) => {
         const line = index + 1;
         const lineComments = commentsByLine.get(line) ?? [];
         return (
@@ -85,6 +116,14 @@ export function FileViewer({
           </Fragment>
         );
       })}
+      {visible < file.lines.length && (
+        <>
+          <div ref={sentinelRef} className="h-8" />
+          <div className="p-2 text-center text-xs text-neutral-500">
+            Loading more lines… ({visible} / {file.lines.length})
+          </div>
+        </>
+      )}
     </div>
   );
 }
