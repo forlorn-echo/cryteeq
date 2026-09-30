@@ -1,10 +1,24 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { Comment } from "../shared/types";
+import { ConfirmDialog } from "./components/ConfirmDialog";
+import { FileViewer } from "./components/FileViewer";
+import { Header } from "./components/Header";
+import { ReportDialog } from "./components/ReportDialog";
+import { WarningBanner } from "./components/WarningBanner";
 import { useReview } from "./useReview";
 
 export function App() {
   const review = useReview();
+  const [wrap, setWrap] = useState(false);
   const [report, setReport] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<"complete" | "restart" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const commentsByLine = useMemo(
+    () => groupByLine(review.comments),
+    [review.comments],
+  );
 
   if (review.loading) {
     return <div className="p-8 text-neutral-400">Loading review…</div>;
@@ -14,36 +28,34 @@ export function App() {
       <div className="p-8 text-red-400">Failed to load: {review.error}</div>
     );
   }
-  if (report !== null) {
-    return (
-      <div className="flex h-screen flex-col bg-neutral-950 p-6 text-neutral-200">
-        <h1 className="mb-2 text-lg font-semibold">Review complete</h1>
-        <p className="mb-4 text-sm text-neutral-400">
-          The server has stopped. You may close this tab.
-        </p>
-        <pre className="flex-1 overflow-auto rounded-md border border-neutral-800 bg-neutral-900 p-4 text-sm">
-          {report}
-        </pre>
-      </div>
-    );
-  }
   if (!review.review || !review.file) {
     return null;
+  }
+  if (report !== null) {
+    return <ReportDialog report={report} fileName={review.review.file_name} />;
   }
 
   const handleComplete = async () => {
     setBusy(true);
+    setActionError(null);
     try {
-      setReport(await review.complete());
-    } finally {
+      const generated = await review.complete();
+      setReport(generated);
+    } catch (err) {
+      setActionError((err as Error).message);
+      setDialog(null);
       setBusy(false);
     }
   };
 
   const handleRestart = async () => {
     setBusy(true);
+    setActionError(null);
     try {
       await review.restart();
+      setDialog(null);
+    } catch (err) {
+      setActionError((err as Error).message);
     } finally {
       setBusy(false);
     }
@@ -51,43 +63,66 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200">
-      <header className="border-b border-neutral-800 p-4">
-        <h1 className="text-sm font-semibold">{review.review.file_name}</h1>
-        <p className="text-xs text-neutral-500">{review.review.file_path}</p>
-        <p className="mt-1 text-xs text-neutral-400">
-          {review.comments.length} comment
-          {review.comments.length === 1 ? "" : "s"}
-        </p>
-        <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            disabled={busy}
-            onClick={() => void handleComplete()}
-          >
-            Complete Review
-          </button>
-          <button
-            type="button"
-            className="rounded-md border border-neutral-700 px-3 py-1.5 text-sm text-red-300 disabled:opacity-50"
-            disabled={busy}
-            onClick={() => void handleRestart()}
-          >
-            Start Fresh
-          </button>
-        </div>
-      </header>
-      {review.review.hash_changed && (
-        <div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-300">
-          This file has changed on disk since the review started — line
-          positions may no longer match.
+      <Header
+        review={review.review}
+        commentCount={review.comments.length}
+        wrap={wrap}
+        onToggleWrap={() => setWrap((w) => !w)}
+        onComplete={() => setDialog("complete")}
+        onStartFresh={() => setDialog("restart")}
+      />
+      {review.review.hash_changed && <WarningBanner />}
+      {actionError && (
+        <div className="border-b border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300">
+          {actionError}
         </div>
       )}
-      <main className="p-4">
-        <pre className="whitespace-pre text-xs leading-6">
-          {review.file.content}
-        </pre>
+      <main className="mx-auto max-w-5xl px-4 py-4">
+        <FileViewer
+          file={review.file}
+          commentsByLine={commentsByLine}
+          wrap={wrap}
+          onAdd={review.addComment}
+          onUpdate={review.updateComment}
+          onDelete={review.deleteComment}
+        />
       </main>
+      {dialog === "complete" && (
+        <ConfirmDialog
+          title="Complete review"
+          message={
+            review.comments.length === 0
+              ? "There are no comments. Complete the review anyway?"
+              : `Complete the review with ${review.comments.length} comment${review.comments.length === 1 ? "" : "s"}? The report will be generated and the server will stop.`
+          }
+          confirmLabel="Complete review"
+          busy={busy}
+          onCancel={() => setDialog(null)}
+          onConfirm={() => void handleComplete()}
+        />
+      )}
+      {dialog === "restart" && (
+        <ConfirmDialog
+          title="Start fresh"
+          message="This discards all current comments and starts a new review. This cannot be undone."
+          confirmLabel="Discard and start fresh"
+          tone="danger"
+          busy={busy}
+          onCancel={() => setDialog(null)}
+          onConfirm={() => void handleRestart()}
+        />
+      )}
     </div>
   );
+}
+
+function groupByLine(comments: Comment[]): Map<number, Comment[]> {
+  const grouped = new Map<number, Comment[]>();
+  const sorted = [...comments].sort((a, b) => a.line - b.line || a.id - b.id);
+  for (const comment of sorted) {
+    const list = grouped.get(comment.line) ?? [];
+    list.push(comment);
+    grouped.set(comment.line, list);
+  }
+  return grouped;
 }
