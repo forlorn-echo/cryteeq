@@ -1,4 +1,13 @@
-const root = document.getElementById("root");
-if (root) {
-  root.textContent = "cryteeq client not yet implemented";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { App } from "./App";
+import "./index.css";
+
+const container = document.getElementById("root");
+if (container) {
+  createRoot(container).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
 }
