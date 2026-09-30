@@ -20,6 +20,7 @@ Two contracts must never break: the **stdout purity contract** (FR-1.5) and the 
 | `specs/v-0.0-base.md` | Normative MVP baseline: requirements contracts (FR tables, NFRs, report format, acceptance criteria) + task breakdown. Frozen once implemented. Any behavior change requires a new `specs/v-0.x-<topic>.md` in the same change. |
 | `specs/v-0.x-<topic>.md` | Later behavior changes append new spec files — never edit released specs in place. |
 | `SKILL.md` | Normative agent-facing usage contract (flags, exit codes, report format, parsing rules). Any change to the CLI contract or report format must update `SKILL.md` in the same change. |
+| `README.md` | Public-facing entry point (non-normative) — keep consistent with the specs above. |
 | `AGENTS.md` | This file — persistent conventions. |
 
 ## Tech Stack
@@ -51,6 +52,8 @@ npm install                # Node >= 20 required
 ```
 cryteeq/
 ├── AGENTS.md
+├── LICENSE                     # BSD 3-Clause
+├── README.md                   # public-facing entry point
 ├── SKILL.md                    # agent-facing CLI usage contract
 ├── specs/
 │   └── v-0.0-base.md           # frozen MVP baseline plan

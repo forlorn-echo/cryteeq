@@ -4,6 +4,7 @@
   "description": "Line-by-line file review tool with a pull-request-style UI",
   "type": "module",
   "private": true,
+  "license": "BSD-3-Clause",
   "bin": {
     "cryteeq": "dist/server/cli.js"
   },
