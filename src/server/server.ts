@@ -77,6 +77,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   let review = deps.review;
   let fileMeta = deps.fileMeta;
   let completionScheduled = false;
+  let cachedReport: string | null = null;
 
   const clientDir = resolve(
     dirname(fileURLToPath(import.meta.url)),
@@ -175,35 +176,37 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
 
   app.post("/api/complete", async () => {
     const rows = listComments(deps.db, review.id);
-    let report: string;
-    try {
-      report = renderReport({
-        fileName: fileMeta.fileName,
-        filePath: fileMeta.absolutePath,
-        sha256: review.file_hash,
-        lines: fileMeta.content.split("\n"),
-        comments: rows.map((r) => ({
-          id: r.id,
-          line: r.line_number,
-          text: r.text,
-        })),
-      });
-    } catch (err) {
-      const message = `report generation failed: ${(err as Error).message}`;
-      deps.onError?.(message);
-      throw new Error(message);
+    if (cachedReport === null) {
+      try {
+        cachedReport = renderReport({
+          fileName: fileMeta.fileName,
+          filePath: fileMeta.absolutePath,
+          sha256: review.file_hash,
+          lines: fileMeta.content.split("\n"),
+          comments: rows.map((r) => ({
+            id: r.id,
+            line: r.line_number,
+            text: r.text,
+          })),
+        });
+      } catch (err) {
+        const message = `report generation failed: ${(err as Error).message}`;
+        deps.onError?.(message);
+        throw new Error(message);
+      }
+      const generated = cachedReport;
+      if (!completionScheduled) {
+        completionScheduled = true;
+        completeReview(deps.db, review.id);
+        review = getReviewById(deps.db, review.id) ?? review;
+        const count = rows.length;
+        setTimeout(
+          () => deps.onComplete(generated, count),
+          deps.completeShutdownDelayMs ?? 200,
+        );
+      }
     }
-    if (!completionScheduled) {
-      completionScheduled = true;
-      completeReview(deps.db, review.id);
-      review = getReviewById(deps.db, review.id) ?? review;
-      const count = rows.length;
-      setTimeout(
-        () => deps.onComplete(report, count),
-        deps.completeShutdownDelayMs ?? 200,
-      );
-    }
-    return { report };
+    return { report: cachedReport };
   });
 
   app.setNotFoundHandler((request, reply) => {
