@@ -178,6 +178,10 @@ async function main(): Promise<void> {
       info(`error: ${message}`);
       logError(message);
     },
+    onAbandoned: () => {
+      info("\nPage closed — comments are saved; re-run cryteeq to resume.");
+      void finish(130);
+    },
   });
 
   process.on("SIGINT", () => {

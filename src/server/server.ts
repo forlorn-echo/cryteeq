@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import fastifyStatic from "@fastify/static";
 import fastify, { type FastifyError, type FastifyInstance } from "fastify";
+import { HEARTBEAT_CHECK_MS, HEARTBEAT_TIMEOUT_MS } from "../shared/heartbeat";
 import {
   DEFAULT_THEME,
   THEMES,
@@ -36,7 +37,10 @@ export interface ServerDeps {
   review: ReviewRow;
   onComplete: (report: string, commentCount: number) => void;
   onError?: (message: string) => void;
+  onAbandoned?: () => void;
   completeShutdownDelayMs?: number;
+  heartbeatTimeoutMs?: number;
+  heartbeatCheckMs?: number;
 }
 
 const MAX_COMMENT_BYTES = 64 * 1024;
@@ -92,6 +96,23 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   let fileMeta = deps.fileMeta;
   let completionScheduled = false;
   let cachedReport: string | null = null;
+  let lastHeartbeatAt: number | null = null;
+  let abandoned = false;
+
+  const heartbeatTimer = setInterval(() => {
+    if (
+      abandoned ||
+      lastHeartbeatAt === null ||
+      completionScheduled ||
+      Date.now() - lastHeartbeatAt <=
+        (deps.heartbeatTimeoutMs ?? HEARTBEAT_TIMEOUT_MS)
+    ) {
+      return;
+    }
+    abandoned = true;
+    deps.onAbandoned?.();
+  }, deps.heartbeatCheckMs ?? HEARTBEAT_CHECK_MS);
+  app.addHook("onClose", async () => clearInterval(heartbeatTimer));
 
   const clientDir = resolve(
     dirname(fileURLToPath(import.meta.url)),
@@ -261,6 +282,11 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       }
     }
     return { report: cachedReport };
+  });
+
+  app.post("/api/heartbeat", async () => {
+    lastHeartbeatAt = Date.now();
+    return { ok: true };
   });
 
   app.setNotFoundHandler((request, reply) => {

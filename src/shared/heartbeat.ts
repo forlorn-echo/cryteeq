@@ -1,0 +1,3 @@
+export const HEARTBEAT_INTERVAL_MS = 5000;
+export const HEARTBEAT_TIMEOUT_MS = 30000;
+export const HEARTBEAT_CHECK_MS = 5000;

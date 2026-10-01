@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type DB,
   type ReviewRow,
@@ -412,5 +412,79 @@ describe("error contract", () => {
     });
     expect(res.body).not.toContain(" at ");
     expect(Object.keys(res.json())).toEqual(["error"]);
+  });
+});
+
+describe("heartbeat watchdog", () => {
+  let hDir: string;
+  let hDb: DB;
+  let hApp: FastifyInstance;
+  let abandonedCalls: number;
+
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    hDir = await mkdtemp(join(tmpdir(), "cryteeq-hb-"));
+    const filePath = join(hDir, "notes.md");
+    await writeFile(filePath, "# Hello\n");
+    const meta = await loadFile(filePath);
+    hDb = openDb(join(hDir, "test.db"));
+    const row = createReview(hDb, meta.absolutePath, meta.sha256, meta.content);
+    abandonedCalls = 0;
+    hApp = await buildServer({
+      db: hDb,
+      fileMeta: meta,
+      review: row,
+      onComplete: () => {},
+      onAbandoned: () => {
+        abandonedCalls += 1;
+      },
+      completeShutdownDelayMs: 10,
+      heartbeatTimeoutMs: 30,
+      heartbeatCheckMs: 10,
+    });
+  });
+
+  afterEach(async () => {
+    vi.useRealTimers();
+    await hApp.close();
+    hDb.close();
+    await rm(hDir, { recursive: true, force: true });
+  });
+
+  it("answers a heartbeat with ok", async () => {
+    const res = await hApp.inject({ method: "POST", url: "/api/heartbeat" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+  });
+
+  it("never abandons a launch whose page never opened", async () => {
+    vi.advanceTimersByTime(200);
+    expect(abandonedCalls).toBe(0);
+  });
+
+  it("abandons once when pings stop arriving", async () => {
+    await hApp.inject({ method: "POST", url: "/api/heartbeat" });
+    vi.advanceTimersByTime(100);
+    expect(abandonedCalls).toBe(1);
+    vi.advanceTimersByTime(200);
+    expect(abandonedCalls).toBe(1);
+  });
+
+  it("stays alive while pings keep arriving, then abandons", async () => {
+    for (let i = 0; i < 3; i++) {
+      await hApp.inject({ method: "POST", url: "/api/heartbeat" });
+      vi.advanceTimersByTime(20);
+    }
+    expect(abandonedCalls).toBe(0);
+    vi.advanceTimersByTime(100);
+    expect(abandonedCalls).toBe(1);
+  });
+
+  it("completion wins over a stale heartbeat", async () => {
+    await hApp.inject({ method: "POST", url: "/api/heartbeat" });
+    const done = await hApp.inject({ method: "POST", url: "/api/complete" });
+    expect(done.statusCode).toBe(200);
+    vi.advanceTimersByTime(200);
+    expect(abandonedCalls).toBe(0);
   });
 });
