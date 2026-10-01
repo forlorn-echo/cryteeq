@@ -1,6 +1,7 @@
 export interface ReportComment {
   id: number;
   line: number;
+  line_end?: number | null;
   text: string;
 }
 
@@ -12,15 +13,20 @@ export interface ReportInput {
   comments: ReportComment[];
 }
 
-function fenceFor(line: string): string {
-  const runs = line.match(/`+/g);
+function fenceFor(block: string): string {
+  const runs = block.match(/`+/g);
   const longest = runs ? Math.max(...runs.map((r) => r.length)) : 0;
   return "`".repeat(Math.max(3, longest + 1));
 }
 
 export function renderReport(input: ReportInput): string {
   const { fileName, filePath, sha256, lines, comments } = input;
-  const sorted = [...comments].sort((a, b) => a.line - b.line || a.id - b.id);
+  const sorted = [...comments].sort(
+    (a, b) =>
+      a.line - b.line ||
+      (a.line_end ?? a.line) - (b.line_end ?? b.line) ||
+      a.id - b.id,
+  );
   const out: string[] = [];
   out.push(`# Review: ${fileName}`, "");
   out.push(`- **File:** \`${filePath}\``);
@@ -28,15 +34,29 @@ export function renderReport(input: ReportInput): string {
   out.push(`- **SHA-256:** \`${sha256}\``);
   out.push(`- **Comments:** ${sorted.length}`, "");
 
-  let currentLine = -1;
+  let currentKey = "";
   let firstInSection = true;
   for (const c of sorted) {
-    if (c.line !== currentLine) {
-      currentLine = c.line;
+    const start = c.line;
+    const end = c.line_end ?? c.line;
+    const key = `${start}:${end}`;
+    if (key !== currentKey) {
+      currentKey = key;
       if (out.length > 0 && out[out.length - 1] !== "") out.push("");
-      const quoted = lines[c.line - 1] ?? "";
-      const fence = fenceFor(quoted);
-      out.push(`## Line ${c.line}`, "", `${fence}text`, quoted, fence, "");
+      const quoted: string[] = [];
+      for (let i = start; i <= end; i++) {
+        quoted.push(lines[i - 1] ?? "");
+      }
+      const block = quoted.join("\n");
+      const fence = fenceFor(block);
+      out.push(
+        end > start ? `## Lines ${start}-${end}` : `## Line ${start}`,
+        "",
+        `${fence}text`,
+        block,
+        fence,
+        "",
+      );
       firstInSection = true;
     }
     if (!firstInSection) out.push("");

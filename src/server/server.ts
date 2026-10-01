@@ -239,6 +239,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
           comments: rows.map((r) => ({
             id: r.id,
             line: r.line_number,
+            line_end: r.line_end,
             text: r.text,
           })),
         });

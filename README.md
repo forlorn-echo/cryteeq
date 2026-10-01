@@ -7,10 +7,11 @@ your browser, get a Markdown report to hand to the author (or to an AI agent).
 
 1. Run `cryteeq <file>` — your browser opens a familiar, PR-style view of
    the file with syntax highlighting.
-2. Click any line to comment. Comments save instantly and survive restarts.
-   The header's comment chip opens an overview of every comment; `j`/`k`
-   jump between comments, `c` comments on the current line, `g` goes to a
-   line number, and `?` lists all shortcuts.
+2. Click any line to comment — or drag across line numbers (click one, then
+   shift-click another) to quote a range of lines. Comments save instantly
+   and survive restarts. The header's comment chip opens an overview of
+   every comment; `j`/`k` jump between comments, `c` comments on the
+   current line, `g` goes to a line number, and `?` lists all shortcuts.
 3. Click **Complete Review** — a dialog shows the report rendered as
    formatted Markdown (with a source toggle) plus **Copy** and **Download**
    buttons, and the server stops.
@@ -75,7 +76,7 @@ dialog and, with `--stdout`, printed to stdout:
 - **File:** `/abs/path/notes.md`
 - **Date:** 2026-09-30T18:22:41.000Z
 - **SHA-256:** `9f2c1ab3d5e7f9a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7a9`
-- **Comments:** 3
+- **Comments:** 4
 
 ## Line 2
 
@@ -85,16 +86,32 @@ This is the reviewed line's content, quoted verbatim.
 
 > Fix this sentence.
 
-## Line 40
+## Lines 40-42
 
 ```text
 Another reviewed line.
+A second line in the quoted range.
+
+The third line, after a blank line, quoted verbatim.
 ```
 
-> Add a reference here.
+> Rewrite this whole block.
 
 > Also fix the indentation here.
+
+## Line 41
+
+```text
+A second line in the quoted range.
+```
+
+> Only this line needs the import fix.
 ````
+
+A comment is always anchored to its **first** quoted line; a single-line
+comment keeps the `## Line N` heading, a range comment produces
+`## Lines N-M`. Reports containing only single-line comments are
+byte-identical to the original format.
 
 ## AI-agent workflow
 
