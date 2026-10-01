@@ -8,6 +8,7 @@ import {
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { FileViewer, type JumpTarget } from "./components/FileViewer";
 import { GoToLine } from "./components/GoToLine";
+import { Loading } from "./components/Loading";
 import { Header } from "./components/Header";
 import { ReportDialog } from "./components/ReportDialog";
 import { ShortcutHelp } from "./components/ShortcutHelp";
@@ -131,11 +132,25 @@ export function App() {
   }, [review.theme]);
 
   if (review.loading) {
-    return <div className="p-8 text-muted">Loading review…</div>;
+    return <Loading />;
   }
   if (review.error) {
     return (
-      <div className="p-8 text-danger">Failed to load: {review.error}</div>
+      <div className="flex min-h-screen items-start justify-center bg-app p-8">
+        <div className="w-full max-w-md rounded-lg border border-danger/40 bg-surface p-5">
+          <h1 className="text-base font-semibold text-fg">
+            Failed to load review
+          </h1>
+          <p className="mt-2 text-sm text-muted">{review.error}</p>
+          <button
+            type="button"
+            onClick={() => void review.retry()}
+            className="mt-4 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
     );
   }
   if (!review.review || !review.file) {
@@ -209,6 +224,19 @@ export function App() {
         onJump={(line) => handleJump(line, "expand")}
       />
       <main className="mx-auto max-w-5xl px-4 py-4">
+        {review.comments.length === 0 && (
+          <div className="mb-3 rounded-md border border-line bg-surface/60 px-4 py-2 text-sm text-muted">
+            No comments yet — hover a line and press{" "}
+            <kbd className="rounded border border-line-strong bg-raised px-1 font-mono text-xs text-fg">
+              +
+            </kbd>{" "}
+            or{" "}
+            <kbd className="rounded border border-line-strong bg-raised px-1 font-mono text-xs text-fg">
+              c
+            </kbd>{" "}
+            to add one.
+          </div>
+        )}
         <FileViewer
           file={review.file}
           commentsByLine={commentsByLine}

@@ -35,6 +35,18 @@ export function useReview() {
       });
   }, [reload]);
 
+  const retry = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await reload();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [reload]);
+
   const addComment = useCallback(async (line: number, text: string) => {
     const created = await api.addComment(line, text);
     setComments((prev) => [...prev, created]);
@@ -91,5 +103,6 @@ export function useReview() {
     restart,
     complete,
     setTheme,
+    retry,
   };
 }
