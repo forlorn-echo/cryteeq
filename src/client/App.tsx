@@ -132,6 +132,12 @@ export function App() {
     document.documentElement.dataset.theme = review.theme;
   }, [review.theme]);
 
+  useEffect(() => {
+    document.title = review.review
+      ? `cryteeq-ing ${review.review.file_name}`
+      : "cryteeq-ing…";
+  }, [review.review]);
+
   if (review.loading) {
     return <Loading />;
   }
