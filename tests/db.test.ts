@@ -11,10 +11,12 @@ import {
   getCommentById,
   getLatestReview,
   getReviewById,
+  getSetting,
   insertComment,
   listComments,
   openDb,
   restartReview,
+  setSetting,
   updateComment,
 } from "../src/server/db";
 
@@ -100,5 +102,26 @@ describe("comments", () => {
 
   it("updateComment on an unknown id returns undefined", () => {
     expect(updateComment(db, 999, "x")).toBeUndefined();
+  });
+});
+
+describe("settings", () => {
+  it("getSetting returns null for a missing key and round-trips a set value", () => {
+    expect(getSetting(db, "theme")).toBeNull();
+    setSetting(db, "theme", "dark");
+    expect(getSetting(db, "theme")).toBe("dark");
+  });
+
+  it("setSetting upserts (overwrites the existing value)", () => {
+    setSetting(db, "theme", "dark");
+    setSetting(db, "theme", "light");
+    expect(getSetting(db, "theme")).toBe("light");
+  });
+
+  it("survives idempotent reopen", () => {
+    setSetting(db, "theme", "catppuccin");
+    const second = openDb(join(dir, "test.db"));
+    expect(getSetting(second, "theme")).toBe("catppuccin");
+    second.close();
   });
 });

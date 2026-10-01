@@ -52,6 +52,11 @@ export function openDb(dbPath: string): DB {
 
     CREATE INDEX IF NOT EXISTS idx_comments_review_line
       ON comments (review_id, line_number);
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
   return db;
 }
@@ -164,4 +169,17 @@ export function updateComment(
 
 export function deleteComment(db: DB, id: number): boolean {
   return db.prepare("DELETE FROM comments WHERE id = ?").run(id).changes > 0;
+}
+
+export function getSetting(db: DB, key: string): string | null {
+  const row = db
+    .prepare("SELECT value FROM settings WHERE key = ?")
+    .get(key) as { value: string } | undefined;
+  return row?.value ?? null;
+}
+
+export function setSetting(db: DB, key: string, value: string): void {
+  db.prepare(
+    "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+  ).run(key, value);
 }
