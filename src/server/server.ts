@@ -58,6 +58,7 @@ function toComment(row: CommentRow): Comment {
   return {
     id: row.id,
     line: row.line_number,
+    line_end: row.line_end,
     text: row.text,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -149,7 +150,8 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   );
 
   app.post("/api/comments", async (request, reply) => {
-    const body = request.body as { line?: unknown; text?: unknown } | undefined;
+    const body = request.body as
+      { line?: unknown; text?: unknown; line_end?: unknown } | undefined;
     const line = body?.line;
     if (
       typeof line !== "number" ||
@@ -161,10 +163,25 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         error: `line must be an integer between 1 and ${fileMeta.lineCount}`,
       });
     }
+    const rawEnd = body?.line_end ?? null;
+    let lineEnd: number | null = null;
+    if (rawEnd !== null) {
+      if (
+        typeof rawEnd !== "number" ||
+        !Number.isInteger(rawEnd) ||
+        rawEnd < line ||
+        rawEnd > fileMeta.lineCount
+      ) {
+        return reply.code(400).send({
+          error: `line_end must be an integer between ${line} and ${fileMeta.lineCount}`,
+        });
+      }
+      lineEnd = rawEnd;
+    }
     const textError = commentTextError(body?.text);
     if (textError) return reply.code(400).send({ error: textError });
     return toComment(
-      insertComment(deps.db, review.id, line, null, body?.text as string),
+      insertComment(deps.db, review.id, line, lineEnd, body?.text as string),
     );
   });
 

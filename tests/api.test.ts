@@ -190,6 +190,7 @@ describe("comments CRUD", () => {
     expect(first.statusCode).toBe(200);
     const c1 = first.json();
     expect(c1.line).toBe(1);
+    expect(c1.line_end).toBeNull();
     expect(c1.text).toBe("first");
 
     const second = await app.inject({
@@ -259,6 +260,68 @@ describe("comments CRUD", () => {
     });
     expect(missing.statusCode).toBe(404);
     expect(missing.json().error).toBe("comment not found");
+  });
+
+  it("accepts a valid range and returns line_end on every comment", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/comments",
+      payload: { line: 1, line_end: 3, text: "range" },
+    });
+    expect(created.statusCode).toBe(200);
+    expect(created.json().line_end).toBe(3);
+    const single = await app.inject({
+      method: "POST",
+      url: "/api/comments",
+      payload: { line: 3, line_end: 3, text: "explicit single" },
+    });
+    expect(single.statusCode).toBe(200);
+    expect(single.json().line_end).toBe(3);
+    const list = await app.inject({ method: "GET", url: "/api/comments" });
+    const body = list.json();
+    expect(body).toHaveLength(2);
+    expect(body[0].line_end).toBe(3);
+    expect(body[1].line_end).toBe(3);
+  });
+
+  it("treats absent and null line_end as single-line", async () => {
+    const absent = await app.inject({
+      method: "POST",
+      url: "/api/comments",
+      payload: { line: 1, text: "absent" },
+    });
+    expect(absent.statusCode).toBe(200);
+    expect(absent.json().line_end).toBeNull();
+    const explicitNull = await app.inject({
+      method: "POST",
+      url: "/api/comments",
+      payload: { line: 1, line_end: null, text: "explicit null" },
+    });
+    expect(explicitNull.statusCode).toBe(200);
+    expect(explicitNull.json().line_end).toBeNull();
+  });
+
+  it("rejects invalid line_end values with 400", async () => {
+    const lineCount = fileMeta.lineCount;
+    const cases = [
+      { line: 2, line_end: 1, text: "reversed" },
+      { line: 1, line_end: lineCount + 1, text: "past end" },
+      { line: 1, line_end: 1.5, text: "fractional" },
+      { line: 1, line_end: "3", text: "string" },
+      { line: 1, line_end: 0, text: "zero" },
+      { line: 1, line_end: -1, text: "negative" },
+    ];
+    for (const payload of cases) {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/comments",
+        payload,
+      });
+      expect(res.statusCode, JSON.stringify(payload)).toBe(400);
+      expect(res.json().error).toMatch(
+        /^line_end must be an integer between \d+ and \d+$/,
+      );
+    }
   });
 });
 

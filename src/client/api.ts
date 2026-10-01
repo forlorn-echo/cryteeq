@@ -32,11 +32,15 @@ export const api = {
       body: JSON.stringify({ theme }),
     }),
   getComments: (): Promise<Comment[]> => json("/api/comments"),
-  addComment: (line: number, text: string): Promise<Comment> =>
+  addComment: (
+    line: number,
+    lineEnd: number | null,
+    text: string,
+  ): Promise<Comment> =>
     json("/api/comments", {
       method: "POST",
       headers: JSON_HEADERS,
-      body: JSON.stringify({ line, text }),
+      body: JSON.stringify({ line, text, line_end: lineEnd }),
     }),
   updateComment: (id: number, text: string): Promise<Comment> =>
     json(`/api/comments/${id}`, {

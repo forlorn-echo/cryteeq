@@ -28,7 +28,8 @@ export interface FilePayload {
 
 export interface Comment {
   id: number; // DB id; not guaranteed contiguous
-  line: number; // 1-based
+  line: number; // 1-based anchor
+  line_end: number | null; // inclusive quote end; null = single-line comment
   text: string;
   created_at: string; // ISO 8601
   updated_at: string;
