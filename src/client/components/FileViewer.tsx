@@ -4,11 +4,22 @@ import { CommentThread } from "./CommentThread";
 import { LineRow } from "./LineRow";
 
 const WINDOW_CHUNK = 500;
+const FLASH_MS = 800;
+
+export interface JumpTarget {
+  line: number;
+  expand: boolean;
+  compose: boolean;
+  nonce: number;
+}
 
 interface FileViewerProps {
   file: FilePayload;
   commentsByLine: Map<number, Comment[]>;
   wrap: boolean;
+  jump: JumpTarget | null;
+  currentLine: number | null;
+  onCurrentLineChange: (line: number | null) => void;
   onAdd: (line: number, text: string) => Promise<void>;
   onUpdate: (id: number, text: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
@@ -18,6 +29,9 @@ export function FileViewer({
   file,
   commentsByLine,
   wrap,
+  jump,
+  currentLine,
+  onCurrentLineChange,
   onAdd,
   onUpdate,
   onDelete,
@@ -29,6 +43,7 @@ export function FileViewer({
   );
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [composerLine, setComposerLine] = useState<number | null>(null);
+  const [flashLine, setFlashLine] = useState<number | null>(null);
   const initialized = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -36,6 +51,7 @@ export function FileViewer({
     initialized.current = false;
     setExpanded(new Set());
     setComposerLine(null);
+    setFlashLine(null);
     setVisible(needsWindowing ? WINDOW_CHUNK : file.lines.length);
   }, [file.content, file.lines.length, needsWindowing]);
 
@@ -60,6 +76,40 @@ export function FileViewer({
     observer.observe(element);
     return () => observer.disconnect();
   }, [visible, file.lines.length]);
+
+  useEffect(() => {
+    if (!jump) return;
+    const { line, expand, compose } = jump;
+    if (line < 1 || line > file.lines.length) return;
+    setVisible((prev) =>
+      line > prev ? Math.min(line + WINDOW_CHUNK, file.lines.length) : prev,
+    );
+    if (expand || compose) {
+      setExpanded((prev) => (prev.has(line) ? prev : new Set(prev).add(line)));
+    }
+    if (compose) setComposerLine(line);
+    setFlashLine(line);
+    const timer = setTimeout(() => setFlashLine(null), FLASH_MS);
+    let retry: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    const scrollToRow = () => {
+      if (cancelled) return;
+      const row = document.querySelector(`[data-line="${line}"]`);
+      if (row) {
+        row.scrollIntoView({ block: "center", behavior: "smooth" });
+      } else {
+        retry = setTimeout(scrollToRow, 25);
+      }
+    };
+    const frame = requestAnimationFrame(scrollToRow);
+    onCurrentLineChange(line);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (retry) clearTimeout(retry);
+      cancelAnimationFrame(frame);
+    };
+  }, [jump, file.lines.length, onCurrentLineChange]);
 
   const toggleLine = (line: number) => {
     setExpanded((prev) => {
@@ -99,8 +149,11 @@ export function FileViewer({
               wrap={wrap}
               commentCount={lineComments.length}
               threadOpen={expanded.has(line)}
+              flash={flashLine === line}
+              isCurrent={currentLine === line}
               onToggleThread={() => toggleLine(line)}
               onAddComment={() => openComposer(line)}
+              onHoverLine={() => onCurrentLineChange(line)}
             />
             {(expanded.has(line) || composerLine === line) && (
               <CommentThread

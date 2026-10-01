@@ -10,6 +10,7 @@ interface HeaderProps {
   themeSwitching: boolean;
   onToggleWrap: () => void;
   onThemeChange: (theme: ThemeId) => void;
+  onOpenOverview: () => void;
   onComplete: () => void;
   onStartFresh: () => void;
 }
@@ -23,6 +24,7 @@ export function Header({
   themeSwitching,
   onToggleWrap,
   onThemeChange,
+  onOpenOverview,
   onComplete,
   onStartFresh,
 }: HeaderProps) {
@@ -37,9 +39,15 @@ export function Header({
             {review.file_path}
           </p>
         </div>
-        <span className="shrink-0 text-xs text-muted">
+        <button
+          type="button"
+          onClick={onOpenOverview}
+          title="Comment overview"
+          aria-label="Open comment overview"
+          className="shrink-0 rounded-full border border-line-strong px-2.5 py-1 text-xs text-fg transition-colors hover:bg-raised"
+        >
           {commentCount} comment{commentCount === 1 ? "" : "s"}
-        </span>
+        </button>
         <button
           type="button"
           onClick={onToggleWrap}

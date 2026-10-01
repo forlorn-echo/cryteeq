@@ -6,8 +6,11 @@ interface LineRowProps {
   wrap: boolean;
   commentCount: number;
   threadOpen: boolean;
+  flash: boolean;
+  isCurrent: boolean;
   onToggleThread: () => void;
   onAddComment: () => void;
+  onHoverLine: () => void;
 }
 
 export function LineRow({
@@ -16,12 +19,25 @@ export function LineRow({
   wrap,
   commentCount,
   threadOpen,
+  flash,
+  isCurrent,
   onToggleThread,
   onAddComment,
+  onHoverLine,
 }: LineRowProps) {
+  const tone = flash
+    ? "bg-accent/30"
+    : commentCount > 0
+      ? "bg-raised/30"
+      : isCurrent
+        ? "bg-accent/10"
+        : "";
+  const hover = flash ? "" : "hover:bg-raised/60";
   return (
     <div
-      className={`group flex items-start ${commentCount > 0 ? "bg-raised/30" : ""} hover:bg-raised/60`}
+      data-line={line}
+      onMouseEnter={onHoverLine}
+      className={`group flex items-start transition-colors ${tone} ${hover}`}
     >
       <div className="flex w-20 shrink-0 select-none items-center justify-end gap-1 pl-3 pr-2 text-xs leading-6 text-faint">
         {commentCount > 0 && (
@@ -30,7 +46,7 @@ export function LineRow({
             onClick={onToggleThread}
             title="Toggle comments"
             aria-label={`Toggle comments on line ${line}`}
-            className={`rounded-full px-1.5 text-[11px] tabular-nums ${
+            className={`rounded-full px-1.5 text-[11px] tabular-nums transition-colors ${
               threadOpen
                 ? "bg-accent/30 text-fg"
                 : "bg-accent/15 text-accent-soft"

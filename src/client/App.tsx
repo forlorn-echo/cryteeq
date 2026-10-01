@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ThemeId } from "../shared/themes";
 import type { Comment } from "../shared/types";
+import {
+  CommentOverview,
+  type OverviewEntry,
+} from "./components/CommentOverview";
 import { ConfirmDialog } from "./components/ConfirmDialog";
-import { FileViewer } from "./components/FileViewer";
+import { FileViewer, type JumpTarget } from "./components/FileViewer";
 import { Header } from "./components/Header";
 import { ReportDialog } from "./components/ReportDialog";
 import { WarningBanner } from "./components/WarningBanner";
+import { excerpt } from "./format";
 import { useReview } from "./useReview";
+
+type JumpMode = "expand" | "scroll" | "compose";
 
 export function App() {
   const review = useReview();
@@ -15,11 +22,42 @@ export function App() {
   const [dialog, setDialog] = useState<"complete" | "restart" | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  const [currentLine, setCurrentLine] = useState<number | null>(null);
+  const [jump, setJump] = useState<JumpTarget | null>(null);
+  const jumpNonce = useRef(0);
 
   const commentsByLine = useMemo(
     () => groupByLine(review.comments),
     [review.comments],
   );
+
+  const overviewEntries = useMemo<OverviewEntry[]>(() => {
+    const entries: OverviewEntry[] = [];
+    for (const [line, list] of commentsByLine) {
+      entries.push({
+        line,
+        count: list.length,
+        excerpt: excerpt(list[0]?.text ?? ""),
+      });
+    }
+    entries.sort((a, b) => a.line - b.line);
+    return entries;
+  }, [commentsByLine]);
+
+  const handleJump = useCallback((line: number, mode: JumpMode = "expand") => {
+    jumpNonce.current += 1;
+    setJump({
+      line,
+      expand: mode === "expand" || mode === "compose",
+      compose: mode === "compose",
+      nonce: jumpNonce.current,
+    });
+  }, []);
+
+  const handleCurrentLine = useCallback((line: number | null) => {
+    setCurrentLine(line);
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = review.theme;
@@ -86,6 +124,7 @@ export function App() {
         themeSwitching={review.switching}
         onToggleWrap={() => setWrap((w) => !w)}
         onThemeChange={(theme) => void handleThemeChange(theme)}
+        onOpenOverview={() => setOverviewOpen(true)}
         onComplete={() => setDialog("complete")}
         onStartFresh={() => setDialog("restart")}
       />
@@ -95,11 +134,21 @@ export function App() {
           {actionError}
         </div>
       )}
+      <CommentOverview
+        open={overviewOpen}
+        entries={overviewEntries}
+        totalComments={review.comments.length}
+        onClose={() => setOverviewOpen(false)}
+        onJump={(line) => handleJump(line, "expand")}
+      />
       <main className="mx-auto max-w-5xl px-4 py-4">
         <FileViewer
           file={review.file}
           commentsByLine={commentsByLine}
           wrap={wrap}
+          jump={jump}
+          currentLine={currentLine}
+          onCurrentLineChange={handleCurrentLine}
           onAdd={review.addComment}
           onUpdate={review.updateComment}
           onDelete={review.deleteComment}
