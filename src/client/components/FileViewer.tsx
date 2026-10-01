@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import type { Comment, FilePayload } from "../../shared/types";
 import { CommentThread } from "./CommentThread";
 import { LineRow } from "./LineRow";
@@ -136,6 +136,14 @@ export function FileViewer({
     }
   };
 
+  const handleAdd = useCallback(
+    async (line: number, text: string) => {
+      await onAdd(line, text);
+      setComposerLine(null);
+    },
+    [onAdd],
+  );
+
   return (
     <div className="rounded-lg border border-line bg-surface text-sm">
       {file.lines.slice(0, visible).map((tokens, index) => {
@@ -160,7 +168,7 @@ export function FileViewer({
                 line={line}
                 comments={lineComments}
                 composerOpen={composerLine === line}
-                onAdd={onAdd}
+                onAdd={handleAdd}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onCancelComposer={() => closeComposer(line)}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Comment } from "../../shared/types";
+import { relativeTime } from "../format";
 
 interface CommentThreadProps {
   line: number;
@@ -21,7 +22,7 @@ export function CommentThread({
   onCancelComposer,
 }: CommentThreadProps) {
   return (
-    <div className="ml-20 border-l-2 border-accent/40 bg-surface/60 px-4 py-3">
+    <div className="ml-20 border-l-2 border-accent/40 bg-surface/60 px-4 py-3 transition-colors">
       {comments.map((comment) => (
         <CommentItem
           key={comment.id}
@@ -89,12 +90,12 @@ function CommentItem({ comment, onUpdate, onDelete }: CommentItemProps) {
             }
           }}
         />
-        <div className="mt-1 flex gap-2">
+        <div className="mt-1 flex items-center gap-2">
           <button
             type="button"
             disabled={busy}
             onClick={() => void save()}
-            className="rounded bg-accent px-2.5 py-1 text-xs text-accent-fg hover:bg-accent-hover disabled:opacity-50"
+            className="rounded bg-accent px-2.5 py-1 text-xs text-accent-fg transition-colors hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
           >
             Save
           </button>
@@ -104,27 +105,35 @@ function CommentItem({ comment, onUpdate, onDelete }: CommentItemProps) {
               setEditing(false);
               setText(comment.text);
             }}
-            className="rounded border border-line-strong px-2.5 py-1 text-xs text-fg hover:bg-raised"
+            className="rounded border border-line-strong px-2.5 py-1 text-xs text-fg transition-colors hover:bg-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
           >
             Cancel
           </button>
+          <span className="ml-auto text-[11px] text-faint">
+            ⌘/Ctrl + Enter to save · Esc to cancel
+          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mb-2 rounded-md border border-line-strong bg-raised/70 p-2.5">
+    <div className="mb-2 rounded-md border border-line-strong bg-raised/70 p-2.5 transition-colors">
       <p className="whitespace-pre-wrap text-sm text-fg">{comment.text}</p>
-      <div className="mt-1.5 flex items-center gap-3 text-[11px] text-faint">
+      <div className="mt-1.5 flex items-center gap-2 text-[11px] text-faint">
         <span title={comment.created_at}>
-          {new Date(comment.created_at).toLocaleString()}
+          {relativeTime(comment.created_at)}
         </span>
+        {comment.updated_at !== comment.created_at && (
+          <span title={comment.updated_at}>
+            · edited {relativeTime(comment.updated_at)}
+          </span>
+        )}
         <span className="flex-1" />
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="text-accent-soft hover:underline"
+          className="text-accent-soft transition-colors hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         >
           Edit
         </button>
@@ -132,7 +141,7 @@ function CommentItem({ comment, onUpdate, onDelete }: CommentItemProps) {
           type="button"
           disabled={busy}
           onClick={() => void remove()}
-          className="text-danger hover:underline disabled:opacity-50"
+          className="text-danger transition-colors hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
         >
           Delete
         </button>
@@ -179,22 +188,25 @@ function Composer({ line, onAdd, onCancel }: ComposerProps) {
           if (event.key === "Escape") onCancel();
         }}
       />
-      <div className="mt-1 flex gap-2">
+      <div className="mt-1 flex items-center gap-2">
         <button
           type="button"
           disabled={busy}
           onClick={() => void submit()}
-          className="rounded bg-accent px-2.5 py-1 text-xs text-accent-fg hover:bg-accent-hover disabled:opacity-50"
+          className="rounded bg-accent px-2.5 py-1 text-xs text-accent-fg transition-colors hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
         >
           Comment
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded border border-line-strong px-2.5 py-1 text-xs text-fg hover:bg-raised"
+          className="rounded border border-line-strong px-2.5 py-1 text-xs text-fg transition-colors hover:bg-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         >
           Cancel
         </button>
+        <span className="ml-auto text-[11px] text-faint">
+          ⌘/Ctrl + Enter to submit · Esc to close
+        </span>
       </div>
     </div>
   );
