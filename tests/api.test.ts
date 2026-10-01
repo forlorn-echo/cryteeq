@@ -8,7 +8,9 @@ import {
   type ReviewRow,
   createReview,
   getActiveReview,
+  getSetting,
   openDb,
+  setSetting,
 } from "../src/server/db";
 import { type FileMeta, loadFile } from "../src/server/fileinfo";
 import { buildServer } from "../src/server/server";
@@ -92,6 +94,89 @@ describe("GET /api/file", () => {
     expect(payload.content).toBe("# Hello\n\nWorld\n");
     expect(payload.lines.length).toBe(fileMeta.lineCount);
     expect(payload.language).toBe("markdown");
+  });
+
+  it("rejects an unknown theme query with 400", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/file?theme=solarized",
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "unknown theme" });
+  });
+
+  it("tokenizes with the requested theme and keeps line parity", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/file?theme=light",
+    });
+    expect(res.statusCode).toBe(200);
+    const payload = res.json();
+    expect(payload.lines.length).toBe(fileMeta.lineCount);
+  });
+
+  it("uses the stored theme when the query is absent", async () => {
+    setSetting(db, "theme", "light");
+    const stored = await app.inject({ method: "GET", url: "/api/file" });
+    const explicit = await app.inject({
+      method: "GET",
+      url: "/api/file?theme=light",
+    });
+    expect(stored.statusCode).toBe(200);
+    expect(stored.json()).toEqual(explicit.json());
+  });
+});
+
+describe("theme endpoints", () => {
+  it("GET /api/theme defaults to catppuccin when no setting is stored", async () => {
+    const res = await app.inject({ method: "GET", url: "/api/theme" });
+    expect(res.statusCode).toBe(200);
+    const state = res.json();
+    expect(state.theme).toBe("catppuccin");
+    expect(state.available.map((t: { id: string }) => t.id)).toEqual([
+      "light",
+      "dark",
+      "catppuccin",
+    ]);
+  });
+
+  it("GET /api/theme returns the stored theme and falls back on invalid stored values", async () => {
+    setSetting(db, "theme", "dark");
+    const res = await app.inject({ method: "GET", url: "/api/theme" });
+    expect(res.json().theme).toBe("dark");
+
+    setSetting(db, "theme", "not-a-theme");
+    const fallback = await app.inject({ method: "GET", url: "/api/theme" });
+    expect(fallback.json().theme).toBe("catppuccin");
+  });
+
+  it("PUT /api/theme persists a valid theme and returns the state", async () => {
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/theme",
+      payload: { theme: "light" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().theme).toBe("light");
+    expect(getSetting(db, "theme")).toBe("light");
+
+    const state = await app.inject({ method: "GET", url: "/api/theme" });
+    expect(state.json().theme).toBe("light");
+  });
+
+  it("PUT /api/theme rejects an unknown theme with 400 and does not persist", async () => {
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/theme",
+      payload: { theme: "solarized" },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "unknown theme" });
+    expect(getSetting(db, "theme")).toBeNull();
+
+    const missing = await app.inject({ method: "PUT", url: "/api/theme" });
+    expect(missing.statusCode).toBe(400);
+    expect(missing.json()).toEqual({ error: "unknown theme" });
   });
 });
 

@@ -4,7 +4,13 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import fastifyStatic from "@fastify/static";
 import fastify, { type FastifyError, type FastifyInstance } from "fastify";
-import type { Comment, FilePayload, ReviewMeta } from "../shared/types";
+import {
+  DEFAULT_THEME,
+  THEMES,
+  isThemeId,
+  type ThemeId,
+} from "../shared/themes";
+import type { Comment, ReviewMeta, ThemeState } from "../shared/types";
 import {
   type CommentRow,
   type DB,
@@ -13,9 +19,11 @@ import {
   deleteComment,
   getCommentById,
   getReviewById,
+  getSetting,
   insertComment,
   listComments,
   restartReview,
+  setSetting,
   updateComment,
 } from "./db";
 import { type FileMeta, loadFile, sha256 } from "./fileinfo";
@@ -72,6 +80,11 @@ function commentTextError(text: unknown): string | null {
   return null;
 }
 
+function storedTheme(db: DB): ThemeId {
+  const value = getSetting(db, "theme");
+  return isThemeId(value) ? value : DEFAULT_THEME;
+}
+
 export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   const app = fastify({ logger: false });
   let review = deps.review;
@@ -103,9 +116,32 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     };
   });
 
-  app.get("/api/file", async (): Promise<FilePayload> => {
-    const lines = await tokenize(fileMeta.content, fileMeta.language);
+  app.get("/api/file", async (request, reply) => {
+    const query = request.query as { theme?: unknown };
+    let theme: ThemeId;
+    if (query.theme === undefined) {
+      theme = storedTheme(deps.db);
+    } else if (isThemeId(query.theme)) {
+      theme = query.theme;
+    } else {
+      return reply.code(400).send({ error: "unknown theme" });
+    }
+    const lines = await tokenize(fileMeta.content, fileMeta.language, theme);
     return { content: fileMeta.content, language: fileMeta.language, lines };
+  });
+
+  app.get("/api/theme", async (): Promise<ThemeState> => ({
+    theme: storedTheme(deps.db),
+    available: THEMES,
+  }));
+
+  app.put("/api/theme", async (request, reply) => {
+    const body = request.body as { theme?: unknown } | undefined;
+    if (!isThemeId(body?.theme)) {
+      return reply.code(400).send({ error: "unknown theme" });
+    }
+    setSetting(deps.db, "theme", body.theme);
+    return { theme: body.theme, available: THEMES } satisfies ThemeState;
   });
 
   app.get("/api/comments", async (): Promise<Comment[]> =>

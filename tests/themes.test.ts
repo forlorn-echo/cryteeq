@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SHIKI_THEMES } from "../src/server/highlight";
 import {
   DEFAULT_THEME,
   THEME_IDS,
@@ -26,5 +27,9 @@ describe("theme registry", () => {
     expect(isThemeId("solarized")).toBe(false);
     expect(isThemeId(42)).toBe(false);
     expect(isThemeId(undefined)).toBe(false);
+  });
+
+  it("maps every theme id to a shiki theme", () => {
+    expect(Object.keys(SHIKI_THEMES).sort()).toEqual([...THEME_IDS].sort());
   });
 });
