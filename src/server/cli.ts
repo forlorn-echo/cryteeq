@@ -1,23 +1,18 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import net from "node:net";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import open from "open";
-import {
-  type DB,
-  type ReviewRow,
-  createReview,
-  getActiveReview,
-  openDb,
-} from "./db";
-import { FileError, detectLanguage, type FileMeta, loadFile } from "./fileinfo";
+import { type DB, openDb } from "./db";
+import { FileError } from "./fileinfo";
 import { logError } from "./logger";
 import { buildServer } from "./server";
+import { type SessionResolution, resolveSession } from "./session";
 
 const USAGE =
-  "usage: cryteeq [--port <n>] [--no-open] [--stdout] [--help] [--version] <file>";
+  "usage: cryteeq [--port <n>] [--no-open] [--stdout] [--start-fresh] [--help] [--version] <file>";
 
 function info(message: string): void {
   process.stderr.write(`${message}\n`);
@@ -59,18 +54,6 @@ async function findPort(start: number): Promise<number | null> {
   return null;
 }
 
-function metaFromSnapshot(absolutePath: string, row: ReviewRow): FileMeta {
-  return {
-    absolutePath,
-    fileName: basename(absolutePath),
-    size: Buffer.byteLength(row.content, "utf8"),
-    sha256: row.file_hash,
-    language: detectLanguage(absolutePath),
-    content: row.content,
-    lineCount: row.content.split("\n").length,
-  };
-}
-
 async function main(): Promise<void> {
   const parsed = (() => {
     try {
@@ -80,6 +63,7 @@ async function main(): Promise<void> {
           port: { type: "string" },
           "no-open": { type: "boolean" },
           stdout: { type: "boolean" },
+          "start-fresh": { type: "boolean" },
           help: { type: "boolean" },
           version: { type: "boolean" },
         },
@@ -139,27 +123,23 @@ async function main(): Promise<void> {
   }
 
   const absolutePath = resolve(fileInput);
-  let resumed = false;
-  let fileMeta: FileMeta;
-  let review: ReviewRow;
-  const active = getActiveReview(db, absolutePath);
-  if (active) {
-    resumed = true;
-    review = active;
-    fileMeta = metaFromSnapshot(absolutePath, active);
-  } else {
-    try {
-      fileMeta = await loadFile(fileInput);
-    } catch (err) {
-      const message =
-        err instanceof FileError
-          ? err.message
-          : `failed to load file: ${(err as Error).message}`;
-      logError(message);
-      fail(message);
-    }
-    review = createReview(db, absolutePath, fileMeta.sha256, fileMeta.content);
+  let session: SessionResolution;
+  try {
+    session = await resolveSession(
+      db,
+      fileInput,
+      absolutePath,
+      values["start-fresh"] === true,
+    );
+  } catch (err) {
+    const message =
+      err instanceof FileError
+        ? err.message
+        : `failed to load file: ${(err as Error).message}`;
+    logError(message);
+    fail(message);
   }
+  const { review, fileMeta, resumed, fresh } = session;
 
   let completion: { report: string; count: number } | null = null;
   let closing = false;
@@ -235,7 +215,8 @@ async function main(): Promise<void> {
   }
 
   const url = `http://127.0.0.1:${port}`;
-  info(`Review ${resumed ? "resumed" : "started"}: ${url}`);
+  const state = resumed ? "resumed" : fresh ? "started fresh" : "started";
+  info(`Review ${state}: ${url}`);
   if (!values["no-open"]) {
     open(url).catch(() => {});
   }
