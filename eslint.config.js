@@ -14,4 +14,8 @@ export default tseslint.config(
       "no-empty": ["error", { allowEmptyCatch: true }],
     },
   },
+  {
+    files: ["scripts/**/*.js"],
+    languageOptions: { globals: { process: "readonly" } },
+  },
 );

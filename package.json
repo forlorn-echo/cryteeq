@@ -1,6 +1,6 @@
 {
   "name": "cryteeq",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Review any text file locally. Comment line-by-line in your browser, get a Markdown report to hand to the author (or to an AI agent).",
   "type": "module",
   "private": true,
@@ -18,7 +18,7 @@
     "build": "npm run build:server && npm run build:client",
     "build:server": "tsup",
     "build:client": "vite build",
-    "prepare": "npm run build",
+    "prepare": "node scripts/prepare.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
