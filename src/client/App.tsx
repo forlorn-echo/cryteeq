@@ -213,7 +213,8 @@ export function App() {
         themeSwitching={review.switching}
         onToggleWrap={() => setWrap((w) => !w)}
         onThemeChange={(theme) => void handleThemeChange(theme)}
-        onOpenOverview={() => setOverviewOpen(true)}
+        onOpenOverview={() => setOverviewOpen((open) => !open)}
+        onOpenHelp={() => setHelpOpen(true)}
         onComplete={() => setDialog("complete")}
         onStartFresh={() => setDialog("restart")}
       />
