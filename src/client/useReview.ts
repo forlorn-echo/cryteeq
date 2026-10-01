@@ -47,10 +47,13 @@ export function useReview() {
     }
   }, [reload]);
 
-  const addComment = useCallback(async (line: number, text: string) => {
-    const created = await api.addComment(line, null, text);
-    setComments((prev) => [...prev, created]);
-  }, []);
+  const addComment = useCallback(
+    async (line: number, lineEnd: number, text: string) => {
+      const created = await api.addComment(line, lineEnd, text);
+      setComments((prev) => [...prev, created]);
+    },
+    [],
+  );
 
   const updateComment = useCallback(async (id: number, text: string) => {
     const updated = await api.updateComment(id, text);

@@ -1,4 +1,11 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type { Comment, FilePayload } from "../../shared/types";
 import { CommentThread } from "./CommentThread";
 import { LineRow } from "./LineRow";
@@ -20,9 +27,14 @@ interface FileViewerProps {
   jump: JumpTarget | null;
   currentLine: number | null;
   onCurrentLineChange: (line: number | null) => void;
-  onAdd: (line: number, text: string) => Promise<void>;
+  onAdd: (line: number, lineEnd: number, text: string) => Promise<void>;
   onUpdate: (id: number, text: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
+}
+
+interface ComposerTarget {
+  start: number;
+  end: number;
 }
 
 export function FileViewer({
@@ -42,16 +54,25 @@ export function FileViewer({
     needsWindowing ? WINDOW_CHUNK : file.lines.length,
   );
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  const [composerLine, setComposerLine] = useState<number | null>(null);
+  const [composer, setComposer] = useState<ComposerTarget | null>(null);
   const [flashLine, setFlashLine] = useState<number | null>(null);
+  const [anchorLine, setAnchorLine] = useState<number | null>(null);
+  const [dragPreview, setDragPreview] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
   const initialized = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<{ start: number; end: number } | null>(null);
 
   useEffect(() => {
     initialized.current = false;
+    dragRef.current = null;
     setExpanded(new Set());
-    setComposerLine(null);
+    setComposer(null);
     setFlashLine(null);
+    setAnchorLine(null);
+    setDragPreview(null);
     setVisible(needsWindowing ? WINDOW_CHUNK : file.lines.length);
   }, [file.content, file.lines.length, needsWindowing]);
 
@@ -87,7 +108,7 @@ export function FileViewer({
     if (expand || compose) {
       setExpanded((prev) => (prev.has(line) ? prev : new Set(prev).add(line)));
     }
-    if (compose) setComposerLine(line);
+    if (compose) setComposer({ start: line, end: line });
     setFlashLine(line);
     const timer = setTimeout(() => setFlashLine(null), FLASH_MS);
     let retry: ReturnType<typeof setTimeout> | null = null;
@@ -111,6 +132,62 @@ export function FileViewer({
     };
   }, [jump, file.lines.length, onCurrentLineChange]);
 
+  const openComposerRange = useCallback((start: number, end: number) => {
+    setComposer({ start, end });
+    setExpanded((prev) => (prev.has(start) ? prev : new Set(prev).add(start)));
+  }, []);
+
+  useEffect(() => {
+    const onPointerUp = () => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      dragRef.current = null;
+      setDragPreview(null);
+      const start = Math.min(drag.start, drag.end);
+      const end = Math.max(drag.start, drag.end);
+      if (start !== end) {
+        openComposerRange(start, end);
+        setAnchorLine(null);
+      } else {
+        setAnchorLine((prev) => (prev === start ? null : start));
+      }
+    };
+    window.addEventListener("pointerup", onPointerUp);
+    return () => window.removeEventListener("pointerup", onPointerUp);
+  }, [openComposerRange]);
+
+  const handleRowHover = useCallback(
+    (line: number) => {
+      const drag = dragRef.current;
+      if (drag) {
+        drag.end = line;
+        setDragPreview({ start: drag.start, end: line });
+        return;
+      }
+      onCurrentLineChange(line);
+    },
+    [onCurrentLineChange],
+  );
+
+  const handleGutterPointerDown = useCallback(
+    (event: ReactPointerEvent, line: number) => {
+      if (event.button !== 0) return;
+      if ((event.target as HTMLElement).closest("button")) return;
+      event.preventDefault();
+      if (event.shiftKey && anchorLine !== null && anchorLine !== line) {
+        openComposerRange(
+          Math.min(anchorLine, line),
+          Math.max(anchorLine, line),
+        );
+        setAnchorLine(null);
+        return;
+      }
+      dragRef.current = { start: line, end: line };
+      setDragPreview({ start: line, end: line });
+    },
+    [anchorLine, openComposerRange],
+  );
+
   const toggleLine = (line: number) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -120,13 +197,8 @@ export function FileViewer({
     });
   };
 
-  const openComposer = (line: number) => {
-    setComposerLine(line);
-    setExpanded((prev) => (prev.has(line) ? prev : new Set(prev).add(line)));
-  };
-
   const closeComposer = (line: number) => {
-    setComposerLine(null);
+    setComposer(null);
     if (!commentsByLine.has(line)) {
       setExpanded((prev) => {
         const next = new Set(prev);
@@ -137,15 +209,26 @@ export function FileViewer({
   };
 
   const handleAdd = useCallback(
-    async (line: number, text: string) => {
-      await onAdd(line, text);
-      setComposerLine(null);
+    async (line: number, lineEnd: number, text: string) => {
+      await onAdd(line, lineEnd, text);
+      setComposer(null);
     },
     [onAdd],
   );
 
+  const dragMin = dragPreview
+    ? Math.min(dragPreview.start, dragPreview.end)
+    : null;
+  const dragMax = dragPreview
+    ? Math.max(dragPreview.start, dragPreview.end)
+    : null;
+
   return (
-    <div className="rounded-lg border border-line bg-surface text-sm">
+    <div
+      className={`rounded-lg border border-line bg-surface text-sm ${
+        dragPreview ? "select-none" : ""
+      }`}
+    >
       {file.lines.slice(0, visible).map((tokens, index) => {
         const line = index + 1;
         const lineComments = commentsByLine.get(line) ?? [];
@@ -159,15 +242,24 @@ export function FileViewer({
               threadOpen={expanded.has(line)}
               flash={flashLine === line}
               isCurrent={currentLine === line}
+              isAnchor={anchorLine === line}
+              inDragRange={
+                dragMin !== null &&
+                dragMax !== null &&
+                line >= dragMin &&
+                line <= dragMax
+              }
               onToggleThread={() => toggleLine(line)}
-              onAddComment={() => openComposer(line)}
-              onHoverLine={() => onCurrentLineChange(line)}
+              onAddComment={() => openComposerRange(line, line)}
+              onHoverLine={() => handleRowHover(line)}
+              onGutterPointerDown={handleGutterPointerDown}
             />
-            {(expanded.has(line) || composerLine === line) && (
+            {(expanded.has(line) || composer?.start === line) && (
               <CommentThread
                 line={line}
                 comments={lineComments}
-                composerOpen={composerLine === line}
+                composerOpen={composer?.start === line}
+                composerEnd={composer?.start === line ? composer.end : null}
                 onAdd={handleAdd}
                 onUpdate={onUpdate}
                 onDelete={onDelete}

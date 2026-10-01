@@ -6,16 +6,24 @@ interface CommentThreadProps {
   line: number;
   comments: Comment[];
   composerOpen: boolean;
-  onAdd: (line: number, text: string) => Promise<void>;
+  composerEnd: number | null;
+  onAdd: (line: number, lineEnd: number, text: string) => Promise<void>;
   onUpdate: (id: number, text: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
   onCancelComposer: () => void;
+}
+
+function rangeEndOf(comment: Comment): number | null {
+  return comment.line_end !== null && comment.line_end > comment.line
+    ? comment.line_end
+    : null;
 }
 
 export function CommentThread({
   line,
   comments,
   composerOpen,
+  composerEnd,
   onAdd,
   onUpdate,
   onDelete,
@@ -32,7 +40,12 @@ export function CommentThread({
         />
       ))}
       {composerOpen && (
-        <Composer line={line} onAdd={onAdd} onCancel={onCancelComposer} />
+        <Composer
+          line={line}
+          rangeEnd={composerEnd}
+          onAdd={onAdd}
+          onCancel={onCancelComposer}
+        />
       )}
     </div>
   );
@@ -48,6 +61,7 @@ function CommentItem({ comment, onUpdate, onDelete }: CommentItemProps) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(comment.text);
   const [busy, setBusy] = useState(false);
+  const rangeEnd = rangeEndOf(comment);
 
   const save = async () => {
     if (busy || !text.trim()) return;
@@ -120,7 +134,15 @@ function CommentItem({ comment, onUpdate, onDelete }: CommentItemProps) {
   return (
     <div className="mb-2 rounded-md border border-line-strong bg-raised/70 p-2.5 transition-colors">
       <p className="whitespace-pre-wrap text-sm text-fg">{comment.text}</p>
-      <div className="mt-1.5 flex items-center gap-2 text-[11px] text-faint">
+      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-faint">
+        {rangeEnd !== null && (
+          <span
+            title={`Anchored to line ${comment.line}, quoting lines ${comment.line}–${rangeEnd}`}
+            className="rounded bg-accent/15 px-1.5 py-0.5 text-accent-soft"
+          >
+            Lines {comment.line}–{rangeEnd}
+          </span>
+        )}
         <span title={comment.created_at}>
           {relativeTime(comment.created_at)}
         </span>
@@ -152,19 +174,21 @@ function CommentItem({ comment, onUpdate, onDelete }: CommentItemProps) {
 
 interface ComposerProps {
   line: number;
-  onAdd: (line: number, text: string) => Promise<void>;
+  rangeEnd: number | null;
+  onAdd: (line: number, lineEnd: number, text: string) => Promise<void>;
   onCancel: () => void;
 }
 
-function Composer({ line, onAdd, onCancel }: ComposerProps) {
+function Composer({ line, rangeEnd, onAdd, onCancel }: ComposerProps) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const isRange = rangeEnd !== null && rangeEnd > line;
 
   const submit = async () => {
     if (busy || !text.trim()) return;
     setBusy(true);
     try {
-      await onAdd(line, text);
+      await onAdd(line, rangeEnd ?? line, text);
       setText("");
     } finally {
       setBusy(false);
@@ -173,10 +197,20 @@ function Composer({ line, onAdd, onCancel }: ComposerProps) {
 
   return (
     <div>
+      {isRange && (
+        <div className="mb-1.5 inline-flex items-center gap-1 rounded bg-accent/15 px-1.5 py-0.5 text-[11px] text-accent-soft">
+          Lines {line}–{rangeEnd}
+          <span className="text-faint">· anchored to line {line}</span>
+        </div>
+      )}
       <textarea
         rows={3}
         autoFocus
-        placeholder={`Comment on line ${line}`}
+        placeholder={
+          isRange
+            ? `Comment on lines ${line}–${rangeEnd}`
+            : `Comment on line ${line}`
+        }
         className="w-full rounded-md border border-line-strong bg-raised p-2 text-sm text-fg focus:border-accent focus:outline-none"
         value={text}
         onChange={(event) => setText(event.target.value)}

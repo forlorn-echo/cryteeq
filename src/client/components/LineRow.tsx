@@ -1,3 +1,4 @@
+import type { PointerEvent as ReactPointerEvent } from "react";
 import type { Token } from "../../shared/types";
 
 interface LineRowProps {
@@ -8,9 +9,12 @@ interface LineRowProps {
   threadOpen: boolean;
   flash: boolean;
   isCurrent: boolean;
+  isAnchor: boolean;
+  inDragRange: boolean;
   onToggleThread: () => void;
   onAddComment: () => void;
   onHoverLine: () => void;
+  onGutterPointerDown: (event: ReactPointerEvent, line: number) => void;
 }
 
 export function LineRow({
@@ -21,17 +25,24 @@ export function LineRow({
   threadOpen,
   flash,
   isCurrent,
+  isAnchor,
+  inDragRange,
   onToggleThread,
   onAddComment,
   onHoverLine,
+  onGutterPointerDown,
 }: LineRowProps) {
   const tone = flash
     ? "bg-accent/30"
-    : commentCount > 0
-      ? "bg-raised/30"
-      : isCurrent
-        ? "bg-accent/10"
-        : "";
+    : inDragRange
+      ? "bg-accent/20"
+      : isAnchor
+        ? "bg-accent/10 ring-1 ring-inset ring-accent/40"
+        : commentCount > 0
+          ? "bg-raised/30"
+          : isCurrent
+            ? "bg-accent/10"
+            : "";
   const hover = flash ? "" : "hover:bg-raised/60";
   return (
     <div
@@ -39,7 +50,11 @@ export function LineRow({
       onMouseEnter={onHoverLine}
       className={`group flex items-start transition-colors ${tone} ${hover}`}
     >
-      <div className="flex w-20 shrink-0 select-none items-center justify-end gap-1 pl-3 pr-2 text-xs leading-6 text-faint">
+      <div
+        onPointerDown={(event) => onGutterPointerDown(event, line)}
+        title="Click to anchor, then shift-click or drag across lines to quote a range"
+        className="flex w-20 shrink-0 cursor-pointer select-none items-center justify-end gap-1 pl-3 pr-2 text-xs leading-6 text-faint"
+      >
         {commentCount > 0 && (
           <button
             type="button"

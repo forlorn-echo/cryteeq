@@ -1,5 +1,6 @@
 interface OverviewEntry {
   line: number;
+  lineEnd: number | null;
   count: number;
   excerpt: string;
 }
@@ -57,7 +58,9 @@ export function CommentOverview({
               className="flex w-full items-start gap-3 border-b border-line/50 px-4 py-2.5 text-left transition-colors hover:bg-raised/60"
             >
               <span className="shrink-0 rounded bg-accent/15 px-1.5 py-0.5 text-[11px] tabular-nums text-accent-soft">
-                {entry.line}
+                {entry.lineEnd !== null && entry.lineEnd > entry.line
+                  ? `${entry.line}–${entry.lineEnd}`
+                  : entry.line}
               </span>
               <span className="min-w-0 flex-1 text-xs text-muted">
                 {entry.excerpt || "—"}

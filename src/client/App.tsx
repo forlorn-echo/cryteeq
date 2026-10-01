@@ -43,6 +43,7 @@ export function App() {
     for (const [line, list] of commentsByLine) {
       entries.push({
         line,
+        lineEnd: list[0]?.line_end ?? null,
         count: list.length,
         excerpt: excerpt(list[0]?.text ?? ""),
       });
