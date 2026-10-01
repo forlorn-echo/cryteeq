@@ -1,6 +1,6 @@
 {
   "name": "cryteeq",
-  "version": "0.7.1",
+  "version": "1.0.0",
   "description": "Review any text file locally. Comment line-by-line in your browser, get a Markdown report to hand to the author (or to an AI agent).",
   "type": "module",
   "private": true,

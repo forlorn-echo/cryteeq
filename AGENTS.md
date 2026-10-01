@@ -18,7 +18,7 @@ Two contracts must never break: the **stdout purity contract** (FR-1.5) and the 
 | Document | Role |
 |---|---|
 | `specs/v-0.0-base.md` | Normative MVP baseline: requirements contracts (FR tables, NFRs, report format, acceptance criteria) + task breakdown. Frozen once implemented. Any behavior change requires a new `specs/v-0.x-<topic>.md` in the same change. |
-| `specs/v-0.x-<topic>.md` | Later behavior changes append new spec files — never edit released specs in place. |
+| `specs/v-0.x-<topic>.md` | Later behavior changes append new spec files — `v-0.x-<topic>.md` through the 1.0 milestone, `v-1.<n>-<topic>.md` afterwards (see Versioning). Never edit released specs in place. |
 | `SKILL.md` | Normative agent-facing usage contract (flags, exit codes, report format, parsing rules). Any change to the CLI contract or report format must update `SKILL.md` in the same change. |
 | `README.md` | Public-facing entry point (non-normative) — keep consistent with the specs above. |
 | `AGENTS.md` | This file — persistent conventions. |
@@ -63,7 +63,8 @@ cryteeq/
 │   ├── v-0.4-page-title.md    # frozen page-title spec
 │   ├── v-0.5-header.md        # frozen header redesign spec
 │   ├── v-0.6-start-fresh.md   # frozen --start-fresh CLI flag spec
-│   └── v-0.7-health-check.md  # frozen page-close health-check spec
+│   ├── v-0.7-health-check.md  # frozen page-close health-check spec
+│   └── v-1.0-release.md       # frozen 1.0.0 milestone spec (versioning amendment)
 ├── index.html                  # Vite entry
 ├── package.json
 ├── eslint.config.js
@@ -173,11 +174,12 @@ npm run typecheck && npm run lint && npm run format:check && npm test && npm run
 
 ### Versioning
 
-- The app version in `package.json` tracks the latest **implemented** spec: `0.<spec minor>.<patch>` (base spec `v-0.0` shipped as `0.0.0`).
-- Implementing `specs/v-0.x-<topic>.md` bumps the minor to `x` in that spec's final task (e.g. `v-0.1-dark-theme.md` → `0.1.0`); the patch digit is for contract-neutral fixes.
+- `1.0.0` marks the stabilized-contract milestone — recorded in `specs/v-1.0-release.md`: the review loop, report format, and agent-facing CLI contract across frozen specs `v-0.0`–`v-0.7`, plus the global-install packaging.
+- Post-1.0 behavior changes append `specs/v-1.<n>-<topic>.md` (monotonic `n`; the first is `v-1.1-<topic>.md`) and bump the shipped version to `1.<n>.0` in that spec's final task; the patch digit is for contract-neutral fixes.
+- Frozen `v-0.x` specs are never renamed or renumbered.
 - `--version` reads `package.json` at runtime — never hardcode the version in source.
 
 ### Specs convention
 
-- `specs/v-0.0-base.md` is frozen once implemented. New behavior changes append `specs/v-0.x-<topic>.md` (monotonic version, e.g. `v-0.1-dark-theme.md`), referencing the FR contracts they change and using the same task format.
+- `specs/v-0.0-base.md` is frozen once implemented. New behavior changes append a `specs/v-<version>-<topic>.md` file — `v-0.x-<topic>.md` through the 1.0 milestone, `v-1.<n>-<topic>.md` afterwards (see Versioning) — referencing the FR contracts they change and using the same task format.
 - Before implementing a spec task, re-read its contract section. Never rewrite a spec file's contracts after implementation — open a new spec instead.
