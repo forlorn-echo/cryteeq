@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { type HeartbeatFetch, startHeartbeat } from "../src/client/heartbeat";
 import { excerpt, relativeTime } from "../src/client/format";
 import { SHORTCUTS, isEditableTarget } from "../src/client/shortcuts";
 
@@ -67,5 +68,37 @@ describe("SHORTCUTS", () => {
     for (const shortcut of SHORTCUTS) {
       expect(shortcut.description.trim().length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("startHeartbeat", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("pings immediately and on each interval, and stop() halts pings", () => {
+    const calls: string[] = [];
+    const fetchFn: HeartbeatFetch = async (url, init) => {
+      calls.push(`${init.method} ${url}`);
+    };
+    const stop = startHeartbeat(fetchFn, 5000);
+    expect(calls).toEqual(["POST /api/heartbeat"]);
+    vi.advanceTimersByTime(15000);
+    expect(calls).toHaveLength(4);
+    stop();
+    vi.advanceTimersByTime(20000);
+    expect(calls).toHaveLength(4);
+  });
+
+  it("swallows fetch failures and keeps pinging", async () => {
+    let attempts = 0;
+    const fetchFn: HeartbeatFetch = async () => {
+      attempts += 1;
+      throw new Error("server down");
+    };
+    const stop = startHeartbeat(fetchFn, 5000);
+    vi.advanceTimersByTime(10000);
+    expect(attempts).toBe(3);
+    stop();
+    await Promise.resolve();
   });
 });

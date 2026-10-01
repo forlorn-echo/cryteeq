@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HEARTBEAT_INTERVAL_MS } from "../shared/heartbeat";
 import type { ThemeId } from "../shared/themes";
 import type { Comment } from "../shared/types";
 import {
@@ -13,6 +14,7 @@ import { Header } from "./components/Header";
 import { ReportDialog } from "./components/ReportDialog";
 import { ShortcutHelp } from "./components/ShortcutHelp";
 import { WarningBanner } from "./components/WarningBanner";
+import { startHeartbeat } from "./heartbeat";
 import { excerpt } from "./format";
 import { isEditableTarget } from "./shortcuts";
 import { useReview } from "./useReview";
@@ -137,6 +139,8 @@ export function App() {
       ? `cryteeq-ing ${review.review.file_name}`
       : "cryteeq-ing…";
   }, [review.review]);
+
+  useEffect(() => startHeartbeat(fetch, HEARTBEAT_INTERVAL_MS), []);
 
   if (review.loading) {
     return <Loading />;
