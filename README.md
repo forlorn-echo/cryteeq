@@ -1,7 +1,7 @@
 # cryteeq
 
-Pull-request-style review for any text file — locally. Comment line-by-line in
-your browser, get a Markdown report to hand to the author (or to an AI agent).
+Review any text file locally. Comment line-by-line in your browser, get a
+Markdown report to hand to the author (or to an AI agent).
 
 ## How it works
 
@@ -30,12 +30,7 @@ and stops with exit `130`, comments saved and resumable.
 Requirements: Node >= 20 on macOS or Linux.
 
 ```bash
-git clone https://github.com/forlorn-echo/cryteeq.git
-cd cryteeq
-npm install
-npm run build
-npm link
-
+npm install -g github:forlorn-echo/cryteeq
 cryteeq path/to/your/file.md
 ```
 
