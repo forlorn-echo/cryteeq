@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { SHIKI_THEMES } from "../src/server/highlight";
 import {
@@ -31,5 +34,41 @@ describe("theme registry", () => {
 
   it("maps every theme id to a shiki theme", () => {
     expect(Object.keys(SHIKI_THEMES).sort()).toEqual([...THEME_IDS].sort());
+  });
+
+  it("defines a CSS palette block per theme id and all tokens in :root", () => {
+    const cssPath = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "src",
+      "client",
+      "index.css",
+    );
+    const css = readFileSync(cssPath, "utf8");
+    for (const id of THEME_IDS) {
+      if (id === DEFAULT_THEME) continue;
+      expect(css, id).toContain(`:root[data-theme="${id}"]`);
+    }
+    const rootBlock = css.slice(css.indexOf(":root {"));
+    for (const token of [
+      "app",
+      "surface",
+      "raised",
+      "line",
+      "line-strong",
+      "fg",
+      "muted",
+      "faint",
+      "accent",
+      "accent-hover",
+      "accent-fg",
+      "accent-soft",
+      "danger",
+      "danger-hover",
+      "danger-fg",
+      "warning",
+    ]) {
+      expect(rootBlock, token).toContain(`--ct-${token}:`);
+    }
   });
 });

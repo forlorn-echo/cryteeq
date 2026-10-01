@@ -1,1 +1,78 @@
 @import "tailwindcss";
+
+@theme inline {
+  --color-app: var(--ct-app);
+  --color-surface: var(--ct-surface);
+  --color-raised: var(--ct-raised);
+  --color-line: var(--ct-line);
+  --color-line-strong: var(--ct-line-strong);
+  --color-fg: var(--ct-fg);
+  --color-muted: var(--ct-muted);
+  --color-faint: var(--ct-faint);
+  --color-accent: var(--ct-accent);
+  --color-accent-hover: var(--ct-accent-hover);
+  --color-accent-fg: var(--ct-accent-fg);
+  --color-accent-soft: var(--ct-accent-soft);
+  --color-danger: var(--ct-danger);
+  --color-danger-hover: var(--ct-danger-hover);
+  --color-danger-fg: var(--ct-danger-fg);
+  --color-warning: var(--ct-warning);
+}
+
+/* default palette: catppuccin (mocha) — applies before data-theme is set */
+:root {
+  --ct-app: #11111b;
+  --ct-surface: #1e1e2e;
+  --ct-raised: #313244;
+  --ct-line: #45475a;
+  --ct-line-strong: #585b70;
+  --ct-fg: #cdd6f4;
+  --ct-muted: #a6adc8;
+  --ct-faint: #6c7086;
+  --ct-accent: #89b4fa;
+  --ct-accent-hover: #b4befe;
+  --ct-accent-fg: #11111b;
+  --ct-accent-soft: #89b4fa;
+  --ct-danger: #f38ba8;
+  --ct-danger-hover: #eba0ac;
+  --ct-danger-fg: #11111b;
+  --ct-warning: #f9e2af;
+}
+
+:root[data-theme="light"] {
+  --ct-app: #ffffff;
+  --ct-surface: #f6f8fa;
+  --ct-raised: #eef2f6;
+  --ct-line: #d1d9e0;
+  --ct-line-strong: #b6bcc2;
+  --ct-fg: #1f2328;
+  --ct-muted: #59636e;
+  --ct-faint: #8c959f;
+  --ct-accent: #0969da;
+  --ct-accent-hover: #218bff;
+  --ct-accent-fg: #ffffff;
+  --ct-accent-soft: #0550ae;
+  --ct-danger: #cf222e;
+  --ct-danger-hover: #a40e26;
+  --ct-danger-fg: #ffffff;
+  --ct-warning: #9a6700;
+}
+
+:root[data-theme="dark"] {
+  --ct-app: #0a0a0a;
+  --ct-surface: #171717;
+  --ct-raised: #262626;
+  --ct-line: #262626;
+  --ct-line-strong: #404040;
+  --ct-fg: #e5e5e5;
+  --ct-muted: #a3a3a3;
+  --ct-faint: #737373;
+  --ct-accent: #2563eb;
+  --ct-accent-hover: #3b82f6;
+  --ct-accent-fg: #ffffff;
+  --ct-accent-soft: #93c5fd;
+  --ct-danger: #f87171;
+  --ct-danger-hover: #fca5a5;
+  --ct-danger-fg: #0a0a0a;
+  --ct-warning: #fcd34d;
+}
