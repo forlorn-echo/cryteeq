@@ -7,10 +7,13 @@ import {
 } from "./components/CommentOverview";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { FileViewer, type JumpTarget } from "./components/FileViewer";
+import { GoToLine } from "./components/GoToLine";
 import { Header } from "./components/Header";
 import { ReportDialog } from "./components/ReportDialog";
+import { ShortcutHelp } from "./components/ShortcutHelp";
 import { WarningBanner } from "./components/WarningBanner";
 import { excerpt } from "./format";
+import { isEditableTarget } from "./shortcuts";
 import { useReview } from "./useReview";
 
 type JumpMode = "expand" | "scroll" | "compose";
@@ -23,6 +26,8 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [overviewOpen, setOverviewOpen] = useState(false);
+  const [gotoOpen, setGotoOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [currentLine, setCurrentLine] = useState<number | null>(null);
   const [jump, setJump] = useState<JumpTarget | null>(null);
   const jumpNonce = useRef(0);
@@ -58,6 +63,68 @@ export function App() {
   const handleCurrentLine = useCallback((line: number | null) => {
     setCurrentLine(line);
   }, []);
+
+  const commentedLines = useMemo(
+    () => [...commentsByLine.keys()].sort((a, b) => a - b),
+    [commentsByLine],
+  );
+
+  const stepComment = useCallback(
+    (dir: 1 | -1) => {
+      if (commentedLines.length === 0) return;
+      let target: number;
+      if (currentLine === null) {
+        target =
+          dir === 1
+            ? commentedLines[0]
+            : commentedLines[commentedLines.length - 1];
+      } else if (dir === 1) {
+        target =
+          commentedLines.find((line) => line > currentLine) ??
+          commentedLines[0];
+      } else {
+        target =
+          [...commentedLines].reverse().find((line) => line < currentLine) ??
+          commentedLines[commentedLines.length - 1];
+      }
+      handleJump(target, "expand");
+    },
+    [commentedLines, currentLine, handleJump],
+  );
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.target instanceof HTMLElement && isEditableTarget(event.target))
+        return;
+      switch (event.key) {
+        case "j":
+          stepComment(1);
+          break;
+        case "k":
+          stepComment(-1);
+          break;
+        case "c":
+          if (currentLine !== null) handleJump(currentLine, "compose");
+          break;
+        case "g":
+          setGotoOpen(true);
+          break;
+        case "?":
+          setHelpOpen(true);
+          break;
+        case "Escape":
+          if (helpOpen) setHelpOpen(false);
+          else if (gotoOpen) setGotoOpen(false);
+          else if (overviewOpen) setOverviewOpen(false);
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [stepComment, currentLine, handleJump, helpOpen, gotoOpen, overviewOpen]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = review.theme;
@@ -154,6 +221,17 @@ export function App() {
           onDelete={review.deleteComment}
         />
       </main>
+      {gotoOpen && (
+        <GoToLine
+          lineCount={review.review.line_count}
+          onSubmit={(line) => {
+            setGotoOpen(false);
+            handleJump(line, "scroll");
+          }}
+          onClose={() => setGotoOpen(false)}
+        />
+      )}
+      {helpOpen && <ShortcutHelp onClose={() => setHelpOpen(false)} />}
       {dialog === "complete" && (
         <ConfirmDialog
           title="Complete review"
