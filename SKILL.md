@@ -36,7 +36,7 @@ Do not use when:
 3. The human comments on lines in the browser and clicks **Complete Review**.
 4. The command exits `0`; stdout holds the Markdown report.
 5. Apply the feedback: parse the report, edit the file to address each comment (see below).
-6. Optional re-review cycle: after applying changes, re-run the same command — since the previous review is complete, a fresh session starts automatically on the updated file.
+6. Optional re-review cycle: after applying changes, re-run the same command — since the previous review is complete, a fresh session starts automatically on the updated file. If a previous session was **interrupted** (exit `130`) and you want to discard its comments instead of resuming them, pass `--start-fresh`.
 
 ## Output contract
 
@@ -110,13 +110,14 @@ Parsing rules:
 | Flag | Effect | Agent guidance |
 |---|---|---|
 | `--stdout` | Emit the report on stdout | **Always pass this** when consuming the report programmatically |
+| `--start-fresh` | Discard any in-progress session for the file and start a new review against the current disk state | Pass when re-opening a file after applying feedback from an interrupted session, or whenever resuming stale comments is unwanted; without it an in-progress session is resumed |
 | `--port <n>` | Use a specific port (default: first free port from 4173) | Omit — let it auto-pick |
 | `--help` / `--version` | Usage / version to stdout | — |
 
 ## Rules & edge cases
 
 - One review session per file path — do not run two instances against the same file concurrently.
-- Interrupted runs (exit `130`) are resumable: the same command reloads saved comments; no partial report is written to stdout.
+- Interrupted runs (exit `130`) are resumable: the same command reloads saved comments; no partial report is written to stdout. Add `--start-fresh` to discard the interrupted session instead.
 - Completion happens **only** via the **Complete Review** button — closing the browser tab or killing the process does not complete a review.
 - There is no "resolve" workflow: the report is the deliverable. The author applies feedback; a new review cycle may follow.
 - `--stdout` does not suppress the browser — the UI still opens for the human.

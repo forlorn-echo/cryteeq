@@ -19,7 +19,8 @@ your browser, get a Markdown report to hand to the author (or to an AI agent).
    fresh review cycle starts automatically.
 
 If a review is interrupted (Ctrl+C, closed terminal), re-running the same
-command resumes exactly where you left off.
+command resumes exactly where you left off; pass `--start-fresh` to discard
+the interrupted session and review the file's current state instead.
 
 ## Quick start
 
@@ -38,7 +39,7 @@ cryteeq path/to/your/file.md
 ## Usage
 
 ```
-cryteeq [--port <n>] [--no-open] [--stdout] [--help] [--version] <file>
+cryteeq [--port <n>] [--no-open] [--stdout] [--start-fresh] [--help] [--version] <file>
 ```
 
 | Flag | Effect |
@@ -46,6 +47,7 @@ cryteeq [--port <n>] [--no-open] [--stdout] [--help] [--version] <file>
 | `--port <n>` | Use a specific port (default: first free port from 4173) |
 | `--no-open` | Don't launch a browser; the URL is printed to stderr |
 | `--stdout` | Emit the Markdown report on standard output upon completion |
+| `--start-fresh` | Discard any in-progress session and review the file's current disk state |
 | `--help` / `--version` | Usage / version |
 
 **Exit codes:**
