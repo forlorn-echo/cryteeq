@@ -30,9 +30,15 @@ and stops with exit `130`, comments saved and resumable.
 Requirements: Node >= 20 on macOS or Linux.
 
 ```bash
-npm install -g github:forlorn-echo/cryteeq
+npm pack github:forlorn-echo/cryteeq
+npm install -g cryteeq-*.tgz
+rm cryteeq-*.tgz
+
 cryteeq path/to/your/file.md
 ```
+
+`npm pack` builds from source before the global install (npm >= 11.19 has a
+broken `npm install -g <git url>` flow).
 
 ## Usage
 
