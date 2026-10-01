@@ -1,22 +1,23 @@
 ---
 name: cryteeq
-description: Collect line-by-line review feedback from a human on any text file via the cryteeq CLI, which opens a pull-request-style review UI in the browser and returns the comments as a Markdown report on stdout. Use when the user wants a human to review a document, spec, config, or code file with per-line comments — e.g. "have me review this file", "I'll give feedback on these lines", "get human review of this doc before you change it", "ask the author to comment on line X" — or whenever structured human feedback (line number + comment) on file contents is needed before editing. Comments are anchored to a single line; the reviewer may quote a contiguous line range for context. Do NOT use when the agent itself is asked to review code, for binary files, or for multi-file/PR-style review.
+description: Get line-by-line review feedback from a human on any text file via the cryteeq CLI. Use when structured human feedback on file contents is needed. Do NOT use when the agent itself is asked to review code, for binary files, or for pull/merge requests.
 ---
 
-# cryteeq — human line-by-line file review
+# cryteeq — line-by-line structured file review from human
 
-`cryteeq <file> --stdout` starts a local review server, opens a pull-request-style UI in the human's browser, lets them comment on any line of the file — or select a contiguous line range to quote — and prints a Markdown report of the comments to **stdout** when they click **Complete Review**. The command then exits and the server stops.
+`cryteeq <file> --stdout` starts a local review server, opens a UI in the browser, allows them to comment on any line of the file — or select a contiguous line range to quote — and prints a Markdown report of the comments to **stdout** when they click **Complete Review**. The command then exits and the server stops.
 
 ## Prerequisites
 
-- v0.0 installs locally from the repo: run `npm link` once, then `cryteeq` is on PATH (a published `npm i -g` / `npx` flow is post-v0.0). Node >= 20.
 - Verify before a blocking run: `cryteeq --version` (prints to stdout, exits `0`).
-- A human is present at the machine and can interact with a browser.
 
 ## When to use
 
 - A human should review a UTF-8 text file and give per-line feedback (docs, specs, configs, code, logs).
 - You need structured feedback (line number → comment) before editing or improving a file.
+- Common use cases:
+  - Spec review and update loop before agent starts working on it.
+  - Execution plan review and update loop.
 
 Do not use when:
 
@@ -109,7 +110,6 @@ Parsing rules:
 | Flag | Effect | Agent guidance |
 |---|---|---|
 | `--stdout` | Emit the report on stdout | **Always pass this** when consuming the report programmatically |
-| `--no-open` | Don't launch a browser; URL printed to stderr | Only if the user asks to open the URL themselves |
 | `--port <n>` | Use a specific port (default: first free port from 4173) | Omit — let it auto-pick |
 | `--help` / `--version` | Usage / version to stdout | — |
 

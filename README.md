@@ -48,8 +48,12 @@ cryteeq [--port <n>] [--no-open] [--stdout] [--help] [--version] <file>
 | `--stdout` | Emit the Markdown report on standard output upon completion |
 | `--help` / `--version` | Usage / version |
 
-**Exit codes:** `0` review completed · `1` usage/runtime error · `130`
-interrupted (resumable).
+**Exit codes:**
+| Code | Cause |
+|----|----|
+| `0` | Review completed |
+| `1` | Usage or runtime error |
+| `130` | Interrupted (resumable) |
 
 Any UTF-8 text file works: Markdown, source code, configs, logs. Binary and
 non-UTF-8 files are rejected with a clear error. Sessions live in
@@ -145,23 +149,7 @@ npm test             # vitest
 Dev mode: `npm run dev:server -- --no-open --port 4173 <file>` (API only) plus
 `npm run dev` (Vite client proxying `/api`).
 
-| Document | Role |
-|---|---|
-| [specs/v-0.0-base.md](specs/v-0.0-base.md) | Normative baseline spec — requirements contracts and task breakdown |
-| [specs/v-0.1-themes.md](specs/v-0.1-themes.md) | Theming spec — registry, persistence, themed highlighting |
-| [specs/v-0.2-ux-overhaul.md](specs/v-0.2-ux-overhaul.md) | UX overhaul spec — comment overview, shortcuts, report dialog, feedback states |
-| [specs/v-0.3-range-quotes.md](specs/v-0.3-range-quotes.md) | Range quotes spec — reviewer-selected quotes, `## Lines N-M` report amendment |
-| [specs/v-0.4-page-title.md](specs/v-0.4-page-title.md) | Page title spec — `cryteeq-ing <file>` tab title |
-| [SKILL.md](SKILL.md) | Agent-facing CLI usage contract |
-| [AGENTS.md](AGENTS.md) | Repository conventions for agents and contributors |
-
-## Status
-
-Version `0.4.0` implements [specs/v-0.0-base.md](specs/v-0.0-base.md),
-[specs/v-0.1-themes.md](specs/v-0.1-themes.md),
-[specs/v-0.2-ux-overhaul.md](specs/v-0.2-ux-overhaul.md),
-[specs/v-0.3-range-quotes.md](specs/v-0.3-range-quotes.md), and
-[specs/v-0.4-page-title.md](specs/v-0.4-page-title.md).
+New features and improvements are implemented using Spec-Driven-Development. They are located in the `specs` directory.
 
 ## License
 
