@@ -60,7 +60,8 @@ cryteeq/
 │   ├── v-0.1-themes.md         # frozen theming spec
 │   ├── v-0.2-ux-overhaul.md    # frozen UX overhaul spec
 │   ├── v-0.3-range-quotes.md   # frozen range-quotes spec (report-format amendment)
-│   └── v-0.4-page-title.md    # frozen page-title spec
+│   ├── v-0.4-page-title.md    # frozen page-title spec
+│   └── v-0.5-header.md        # frozen header redesign spec
 ├── index.html                  # Vite entry
 ├── package.json
 ├── eslint.config.js
@@ -90,9 +91,9 @@ cryteeq/
 │       ├── format.ts           # relative time + excerpt helpers (DOM-free, unit-tested)
 │       ├── shortcuts.ts        # shortcut list + editable-target guard (DOM-free, unit-tested)
 │       ├── index.css           # Tailwind import + @theme inline mapping + per-theme palette blocks
-│       └── components/         # Header, WarningBanner, FileViewer, LineRow, CommentThread,
-│                             #   CommentOverview, GoToLine, ShortcutHelp, Loading,
-│                             #   Dialog, ConfirmDialog, ReportDialog
+│       └── components/         # Header, icons (inline SVG set), WarningBanner, FileViewer,
+│                             #   LineRow, CommentThread, CommentOverview, GoToLine,
+│                             #   ShortcutHelp, Loading, Dialog, ConfirmDialog, ReportDialog
 └── tests/
     ├── fileinfo.test.ts
     ├── db.test.ts
