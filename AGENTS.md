@@ -56,7 +56,10 @@ cryteeq/
 ├── README.md                   # public-facing entry point
 ├── SKILL.md                    # agent-facing CLI usage contract
 ├── specs/
-│   └── v-0.0-base.md           # frozen MVP baseline plan
+│   ├── v-0.0-base.md           # frozen MVP baseline plan
+│   ├── v-0.1-themes.md         # frozen theming spec
+│   ├── v-0.2-ux-overhaul.md    # frozen UX overhaul spec
+│   └── v-0.3-range-quotes.md   # approved range-quotes spec (report-format amendment)
 ├── index.html                  # Vite entry
 ├── package.json
 ├── eslint.config.js
@@ -83,15 +86,20 @@ cryteeq/
 │       ├── App.tsx
 │       ├── api.ts              # fetch wrappers
 │       ├── useReview.ts        # the single state hook
+│       ├── format.ts           # relative time + excerpt helpers (DOM-free, unit-tested)
+│       ├── shortcuts.ts        # shortcut list + editable-target guard (DOM-free, unit-tested)
 │       ├── index.css           # Tailwind import + @theme inline mapping + per-theme palette blocks
-│       └── components/         # Header, WarningBanner, FileViewer, LineRow,
-│                             #   CommentThread, Dialog, ConfirmDialog, ReportDialog
+│       └── components/         # Header, WarningBanner, FileViewer, LineRow, CommentThread,
+│                             #   CommentOverview, GoToLine, ShortcutHelp, Loading,
+│                             #   Dialog, ConfirmDialog, ReportDialog
 └── tests/
     ├── fileinfo.test.ts
     ├── db.test.ts
     ├── report.test.ts
     ├── highlight.test.ts
     ├── logger.test.ts
+    ├── themes.test.ts
+    ├── client-helpers.test.ts
     └── api.test.ts
 ```
 

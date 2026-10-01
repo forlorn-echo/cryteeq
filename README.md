@@ -5,11 +5,15 @@ your browser, get a Markdown report to hand to the author (or to an AI agent).
 
 ## How it works
 
-1. Run `cryteeq <file>` — your browser opens a familiar, PR-style view of the
-   file with syntax highlighting.
+1. Run `cryteeq <file>` — your browser opens a familiar, PR-style view of
+   the file with syntax highlighting.
 2. Click any line to comment. Comments save instantly and survive restarts.
-3. Click **Complete Review** — a dialog shows the generated Markdown report
-   with a **Copy** button, and the server stops.
+   The header's comment chip opens an overview of every comment; `j`/`k`
+   jump between comments, `c` comments on the current line, `g` goes to a
+   line number, and `?` lists all shortcuts.
+3. Click **Complete Review** — a dialog shows the report rendered as
+   formatted Markdown (with a source toggle) plus **Copy** and **Download**
+   buttons, and the server stops.
 4. Share the report with the author. They apply the feedback, you re-run — a
    fresh review cycle starts automatically.
 
@@ -128,13 +132,15 @@ Dev mode: `npm run dev:server -- --no-open --port 4173 <file>` (API only) plus
 |---|---|
 | [specs/v-0.0-base.md](specs/v-0.0-base.md) | Normative baseline spec — requirements contracts and task breakdown |
 | [specs/v-0.1-themes.md](specs/v-0.1-themes.md) | Theming spec — registry, persistence, themed highlighting |
+| [specs/v-0.2-ux-overhaul.md](specs/v-0.2-ux-overhaul.md) | UX overhaul spec — comment overview, shortcuts, report dialog, feedback states |
 | [SKILL.md](SKILL.md) | Agent-facing CLI usage contract |
 | [AGENTS.md](AGENTS.md) | Repository conventions for agents and contributors |
 
 ## Status
 
-Version `0.1.0` implements [specs/v-0.0-base.md](specs/v-0.0-base.md) and
-[specs/v-0.1-themes.md](specs/v-0.1-themes.md).
+Version `0.2.0` implements [specs/v-0.0-base.md](specs/v-0.0-base.md),
+[specs/v-0.1-themes.md](specs/v-0.1-themes.md), and
+[specs/v-0.2-ux-overhaul.md](specs/v-0.2-ux-overhaul.md).
 
 ## License
 
