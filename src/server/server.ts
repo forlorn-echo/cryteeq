@@ -164,7 +164,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const textError = commentTextError(body?.text);
     if (textError) return reply.code(400).send({ error: textError });
     return toComment(
-      insertComment(deps.db, review.id, line, body?.text as string),
+      insertComment(deps.db, review.id, line, null, body?.text as string),
     );
   });
 

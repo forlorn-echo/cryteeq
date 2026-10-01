@@ -18,6 +18,7 @@ export interface CommentRow {
   id: number;
   review_id: number;
   line_number: number;
+  line_end: number | null;
   text: string;
   created_at: string;
   updated_at: string;
@@ -42,9 +43,10 @@ export function openDb(dbPath: string): DB {
       id          INTEGER PRIMARY KEY,
       review_id   INTEGER NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
       line_number INTEGER NOT NULL,
+      line_end    INTEGER,
       text        TEXT NOT NULL,
-      created_at  TEXT NOT NULL,
-      updated_at  TEXT NOT NULL
+      created_at   TEXT NOT NULL,
+      updated_at   TEXT NOT NULL
     );
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_active
@@ -58,6 +60,12 @@ export function openDb(dbPath: string): DB {
       value TEXT NOT NULL
     );
   `);
+  const columns = db.prepare("PRAGMA table_info(comments)").all() as Array<{
+    name: string;
+  }>;
+  if (!columns.some((column) => column.name === "line_end")) {
+    db.exec("ALTER TABLE comments ADD COLUMN line_end INTEGER");
+  }
   return db;
 }
 
@@ -144,14 +152,15 @@ export function insertComment(
   db: DB,
   reviewId: number,
   line: number,
+  lineEnd: number | null,
   text: string,
 ): CommentRow {
   const ts = now();
   const info = db
     .prepare(
-      "INSERT INTO comments (review_id, line_number, text, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO comments (review_id, line_number, line_end, text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
     )
-    .run(reviewId, line, text, ts, ts);
+    .run(reviewId, line, lineEnd, text, ts, ts);
   return getCommentById(db, Number(info.lastInsertRowid)) as CommentRow;
 }
 
