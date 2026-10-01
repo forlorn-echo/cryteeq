@@ -62,7 +62,8 @@ cryteeq/
 │   ├── v-0.3-range-quotes.md   # frozen range-quotes spec (report-format amendment)
 │   ├── v-0.4-page-title.md    # frozen page-title spec
 │   ├── v-0.5-header.md        # frozen header redesign spec
-│   └── v-0.6-start-fresh.md   # frozen --start-fresh CLI flag spec
+│   ├── v-0.6-start-fresh.md   # frozen --start-fresh CLI flag spec
+│   └── v-0.7-health-check.md  # frozen page-close health-check spec
 ├── index.html                  # Vite entry
 ├── package.json
 ├── eslint.config.js

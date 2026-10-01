@@ -20,7 +20,10 @@ your browser, get a Markdown report to hand to the author (or to an AI agent).
 
 If a review is interrupted (Ctrl+C, closed terminal), re-running the same
 command resumes exactly where you left off; pass `--start-fresh` to discard
-the interrupted session and review the file's current state instead.
+the interrupted session and review the file's current state instead. Closing
+the browser tab also ends the session — the server notices within about half a
+minute (once every tab is gone; a refresh or a second tab keeps it alive)
+and stops with exit `130`, comments saved and resumable.
 
 ## Quick start
 
@@ -55,7 +58,7 @@ cryteeq [--port <n>] [--no-open] [--stdout] [--start-fresh] [--help] [--version]
 |----|----|
 | `0` | Review completed |
 | `1` | Usage or runtime error |
-| `130` | Interrupted (resumable) |
+| `130` | Interrupted (Ctrl+C, SIGTERM, or the page was closed) — resumable |
 
 Any UTF-8 text file works: Markdown, source code, configs, logs. Binary and
 non-UTF-8 files are rejected with a clear error. Sessions live in

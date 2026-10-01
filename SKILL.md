@@ -46,7 +46,7 @@ Do not use when:
 | stderr | Progress info, summary line, errors |
 | Exit `0` | Review completed; report on stdout |
 | Exit `1` | Usage or runtime error (missing file, binary/non-UTF-8 file, `--port` in use, report failure); stdout empty |
-| Exit `130` | Interrupted (Ctrl+C / SIGTERM); in-progress comments are saved; re-running the same command resumes them |
+| Exit `130` | Interrupted (Ctrl+C / SIGTERM, or the review page was closed — the server auto-stops within ~30s of the last tab closing); in-progress comments are saved; re-running the same command resumes them |
 
 ## Report format
 
@@ -118,7 +118,8 @@ Parsing rules:
 
 - One review session per file path — do not run two instances against the same file concurrently.
 - Interrupted runs (exit `130`) are resumable: the same command reloads saved comments; no partial report is written to stdout. Add `--start-fresh` to discard the interrupted session instead.
-- Completion happens **only** via the **Complete Review** button — closing the browser tab or killing the process does not complete a review.
+- Completion happens **only** via the **Complete Review** button — closing the browser tab or killing the process does not complete a review. Closing the tab stops the server gracefully within ~30 seconds (only when **all** tabs are gone; a refresh or a second open tab keeps it alive) and exits `130`; there is never a report on that path.
+- On exit `130` after a page close, the human walked away mid-review: comments are saved and resumable — ask before assuming the review is finished.
 - There is no "resolve" workflow: the report is the deliverable. The author applies feedback; a new review cycle may follow.
 - `--stdout` does not suppress the browser — the UI still opens for the human.
 
