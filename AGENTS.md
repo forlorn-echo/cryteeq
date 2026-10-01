@@ -30,7 +30,7 @@ Two contracts must never break: the **stdout purity contract** (FR-1.5) and the 
 | Runtime | Node >= 20, TypeScript (strict), ESM |
 | Server | Fastify 5, `@fastify/static` |
 | Database | `better-sqlite3` (WAL, foreign keys ON); plain SQL migrations |
-| Highlighting | `shiki` — server-side tokenization, theme `github-dark`, lazily loaded grammars |
+| Highlighting | `shiki` — server-side tokenization per theme (`github-light` / `github-dark` / `catppuccin-mocha`), lazily loaded grammars and themes |
 | Browser launch | `open` |
 | Client | Vite + React 18 + TypeScript, Tailwind CSS 4 |
 | Tests | vitest (node environment; `fastify.inject`; never live servers) |
@@ -68,7 +68,8 @@ cryteeq/
 ├── vitest.config.ts
 ├── src/
 │   ├── shared/
-│   │   └── types.ts            # API / payload types shared by server and client
+│   │   ├── types.ts            # API / payload types shared by server and client
+│   │   └── themes.ts           # canonical theme registry: ids, labels, default theme
 │   ├── server/
 │   │   ├── cli.ts              # entry: args, port, session resolve, signals, --stdout
 │   │   ├── server.ts           # Fastify app, routes, static serving, SPA fallback
@@ -82,7 +83,7 @@ cryteeq/
 │       ├── App.tsx
 │       ├── api.ts              # fetch wrappers
 │       ├── useReview.ts        # the single state hook
-│       ├── index.css           # @import "tailwindcss";
+│       ├── index.css           # Tailwind import + @theme inline mapping + per-theme palette blocks
 │       └── components/         # Header, WarningBanner, FileViewer, LineRow,
 │                             #   CommentThread, Dialog, ConfirmDialog, ReportDialog
 └── tests/
@@ -149,7 +150,7 @@ npm run typecheck && npm run lint && npm run format:check && npm test && npm run
 - No comments in code unless explicitly asked.
 - Two tsconfigs: `tsconfig.json` (server, shared, tests, build configs) and `tsconfig.client.json` (client, shared; DOM libs; `jsx: react-jsx`).
 - `better-sqlite3` and `shiki` stay external in the tsup bundle.
-- Styling is Tailwind utility classes inline; `src/client/index.css` contains only the Tailwind import.
+- Styling is Tailwind semantic utility classes inline (`bg-app`, `text-fg`, `border-line`, …); `src/client/index.css` contains the Tailwind import, the `@theme inline` semantic-token mapping, and one CSS variable block per theme (`:root` = default catppuccin, plus `:root[data-theme="<id>"]` per theme). Adding a theme = registry entry in `src/shared/themes.ts` + shiki mapping in `src/server/highlight.ts` (`Record<ThemeId, BundledTheme>` — compile-enforced) + one palette block in `index.css`; the selected theme persists in the DB `settings` table (key `theme`).
 
 ### Git
 

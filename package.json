@@ -1,6 +1,6 @@
 {
   "name": "cryteeq",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Line-by-line file review tool with a pull-request-style UI",
   "type": "module",
   "private": true,

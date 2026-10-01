@@ -52,6 +52,14 @@ non-UTF-8 files are rejected with a clear error. Sessions live in
 retained), and runtime errors append to a per-launch file under
 `~/.cryteeq/logs/` — clean runs write nothing.
 
+## Themes
+
+The UI ships with three themes — **Catppuccin** (the default), **Dark**, and
+**Light** — selectable from the header. Both the chrome and the syntax
+highlighting follow the theme, and your choice is remembered across
+launches. Switching themes never disturbs your review: open threads, composer
+text, and scroll position are preserved.
+
 ## The report
 
 The deliverable is a deterministic Markdown report — shown in the completion
@@ -119,12 +127,14 @@ Dev mode: `npm run dev:server -- --no-open --port 4173 <file>` (API only) plus
 | Document | Role |
 |---|---|
 | [specs/v-0.0-base.md](specs/v-0.0-base.md) | Normative baseline spec — requirements contracts and task breakdown |
+| [specs/v-0.1-themes.md](specs/v-0.1-themes.md) | Theming spec — registry, persistence, themed highlighting |
 | [SKILL.md](SKILL.md) | Agent-facing CLI usage contract |
 | [AGENTS.md](AGENTS.md) | Repository conventions for agents and contributors |
 
 ## Status
 
-Version `0.0.0` implements [specs/v-0.0-base.md](specs/v-0.0-base.md).
+Version `0.1.0` implements [specs/v-0.0-base.md](specs/v-0.0-base.md) and
+[specs/v-0.1-themes.md](specs/v-0.1-themes.md).
 
 ## License
 
