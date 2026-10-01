@@ -1,3 +1,5 @@
+import type { ThemeId, ThemeInfo } from "./themes";
+
 export type ReviewStatus = "in_progress" | "complete";
 
 export interface ReviewMeta {
@@ -34,4 +36,9 @@ export interface Comment {
 
 export interface CompletePayload {
   report: string;
+}
+
+export interface ThemeState {
+  theme: ThemeId; // current persisted theme (validated; invalid stored value -> DEFAULT_THEME)
+  available: ThemeInfo[];
 }
