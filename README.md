@@ -150,14 +150,16 @@ Dev mode: `npm run dev:server -- --no-open --port 4173 <file>` (API only) plus
 | [specs/v-0.0-base.md](specs/v-0.0-base.md) | Normative baseline spec — requirements contracts and task breakdown |
 | [specs/v-0.1-themes.md](specs/v-0.1-themes.md) | Theming spec — registry, persistence, themed highlighting |
 | [specs/v-0.2-ux-overhaul.md](specs/v-0.2-ux-overhaul.md) | UX overhaul spec — comment overview, shortcuts, report dialog, feedback states |
+| [specs/v-0.3-range-quotes.md](specs/v-0.3-range-quotes.md) | Range quotes spec — reviewer-selected quotes, `## Lines N-M` report amendment |
 | [SKILL.md](SKILL.md) | Agent-facing CLI usage contract |
 | [AGENTS.md](AGENTS.md) | Repository conventions for agents and contributors |
 
 ## Status
 
-Version `0.2.0` implements [specs/v-0.0-base.md](specs/v-0.0-base.md),
-[specs/v-0.1-themes.md](specs/v-0.1-themes.md), and
-[specs/v-0.2-ux-overhaul.md](specs/v-0.2-ux-overhaul.md).
+Version `0.3.0` implements [specs/v-0.0-base.md](specs/v-0.0-base.md),
+[specs/v-0.1-themes.md](specs/v-0.1-themes.md),
+[specs/v-0.2-ux-overhaul.md](specs/v-0.2-ux-overhaul.md), and
+[specs/v-0.3-range-quotes.md](specs/v-0.3-range-quotes.md).
 
 ## License
 
