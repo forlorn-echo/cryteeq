@@ -21,11 +21,11 @@ export function App() {
   );
 
   if (review.loading) {
-    return <div className="p-8 text-neutral-400">Loading review…</div>;
+    return <div className="p-8 text-muted">Loading review…</div>;
   }
   if (review.error) {
     return (
-      <div className="p-8 text-red-400">Failed to load: {review.error}</div>
+      <div className="p-8 text-danger">Failed to load: {review.error}</div>
     );
   }
   if (!review.review || !review.file) {
@@ -62,7 +62,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-200">
+    <div className="min-h-screen bg-app text-fg">
       <Header
         review={review.review}
         commentCount={review.comments.length}
@@ -73,7 +73,7 @@ export function App() {
       />
       {review.review.hash_changed && <WarningBanner />}
       {actionError && (
-        <div className="border-b border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300">
+        <div className="border-b border-danger/40 bg-danger/10 px-4 py-2 text-sm text-danger">
           {actionError}
         </div>
       )}

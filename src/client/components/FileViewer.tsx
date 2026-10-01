@@ -87,7 +87,7 @@ export function FileViewer({
   };
 
   return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 text-sm">
+    <div className="rounded-lg border border-line bg-surface text-sm">
       {file.lines.slice(0, visible).map((tokens, index) => {
         const line = index + 1;
         const lineComments = commentsByLine.get(line) ?? [];
@@ -119,7 +119,7 @@ export function FileViewer({
       {visible < file.lines.length && (
         <>
           <div ref={sentinelRef} className="h-8" />
-          <div className="p-2 text-center text-xs text-neutral-500">
+          <div className="p-2 text-center text-xs text-faint">
             Loading more lines… ({visible} / {file.lines.length})
           </div>
         </>
