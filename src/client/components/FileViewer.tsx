@@ -37,7 +37,7 @@ export function FileViewer({
     setExpanded(new Set());
     setComposerLine(null);
     setVisible(needsWindowing ? WINDOW_CHUNK : file.lines.length);
-  }, [file, needsWindowing]);
+  }, [file.content, file.lines.length, needsWindowing]);
 
   useEffect(() => {
     if (initialized.current || commentsByLine.size === 0) return;

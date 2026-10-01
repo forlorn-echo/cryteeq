@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { ThemeId } from "../shared/themes";
 import type { Comment } from "../shared/types";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { FileViewer } from "./components/FileViewer";
@@ -19,6 +20,10 @@ export function App() {
     () => groupByLine(review.comments),
     [review.comments],
   );
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = review.theme;
+  }, [review.theme]);
 
   if (review.loading) {
     return <div className="p-8 text-muted">Loading review…</div>;
@@ -61,13 +66,26 @@ export function App() {
     }
   };
 
+  const handleThemeChange = async (theme: ThemeId) => {
+    setActionError(null);
+    try {
+      await review.setTheme(theme);
+    } catch (err) {
+      setActionError((err as Error).message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-app text-fg">
       <Header
         review={review.review}
         commentCount={review.comments.length}
         wrap={wrap}
+        theme={review.theme}
+        themes={review.themes}
+        themeSwitching={review.switching}
         onToggleWrap={() => setWrap((w) => !w)}
+        onThemeChange={(theme) => void handleThemeChange(theme)}
         onComplete={() => setDialog("complete")}
         onStartFresh={() => setDialog("restart")}
       />

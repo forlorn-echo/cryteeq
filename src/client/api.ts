@@ -1,8 +1,10 @@
+import type { ThemeId } from "../shared/themes";
 import type {
   Comment,
   CompletePayload,
   FilePayload,
   ReviewMeta,
+  ThemeState,
 } from "../shared/types";
 
 async function json<T>(url: string, init?: RequestInit): Promise<T> {
@@ -20,7 +22,15 @@ const JSON_HEADERS = { "content-type": "application/json" };
 
 export const api = {
   getReview: (): Promise<ReviewMeta> => json("/api/review"),
-  getFile: (): Promise<FilePayload> => json("/api/file"),
+  getFile: (theme: ThemeId): Promise<FilePayload> =>
+    json(`/api/file?theme=${encodeURIComponent(theme)}`),
+  getTheme: (): Promise<ThemeState> => json("/api/theme"),
+  setTheme: (theme: ThemeId): Promise<ThemeState> =>
+    json("/api/theme", {
+      method: "PUT",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ theme }),
+    }),
   getComments: (): Promise<Comment[]> => json("/api/comments"),
   addComment: (line: number, text: string): Promise<Comment> =>
     json("/api/comments", {

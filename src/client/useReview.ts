@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { DEFAULT_THEME, type ThemeId, type ThemeInfo } from "../shared/themes";
 import type { Comment, FilePayload, ReviewMeta } from "../shared/types";
 import { api } from "./api";
 
@@ -6,18 +7,23 @@ export function useReview() {
   const [review, setReview] = useState<ReviewMeta | null>(null);
   const [file, setFile] = useState<FilePayload | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [theme, setThemeState] = useState<ThemeId>(DEFAULT_THEME);
+  const [themes, setThemes] = useState<ThemeInfo[]>([]);
+  const [switching, setSwitching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const [reviewMeta, filePayload, commentList] = await Promise.all([
+    const [themeState, reviewMeta, commentList] = await Promise.all([
+      api.getTheme(),
       api.getReview(),
-      api.getFile(),
       api.getComments(),
     ]);
+    setThemeState(themeState.theme);
+    setThemes(themeState.available);
     setReview(reviewMeta);
-    setFile(filePayload);
     setComments(commentList);
+    setFile(await api.getFile(themeState.theme));
   }, []);
 
   useEffect(() => {
@@ -54,10 +60,29 @@ export function useReview() {
     return payload.report;
   }, []);
 
+  const setTheme = useCallback(
+    async (id: ThemeId) => {
+      if (switching) return;
+      setSwitching(true);
+      try {
+        const state = await api.setTheme(id);
+        setThemeState(state.theme);
+        setThemes(state.available);
+        setFile(await api.getFile(state.theme));
+      } finally {
+        setSwitching(false);
+      }
+    },
+    [switching],
+  );
+
   return {
     review,
     file,
     comments,
+    theme,
+    themes,
+    switching,
     loading,
     error,
     addComment,
@@ -65,5 +90,6 @@ export function useReview() {
     deleteComment,
     restart,
     complete,
+    setTheme,
   };
 }
