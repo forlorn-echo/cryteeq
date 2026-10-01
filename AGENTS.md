@@ -59,7 +59,8 @@ cryteeq/
 │   ├── v-0.0-base.md           # frozen MVP baseline plan
 │   ├── v-0.1-themes.md         # frozen theming spec
 │   ├── v-0.2-ux-overhaul.md    # frozen UX overhaul spec
-│   └── v-0.3-range-quotes.md   # frozen range-quotes spec (report-format amendment)
+│   ├── v-0.3-range-quotes.md   # frozen range-quotes spec (report-format amendment)
+│   └── v-0.4-page-title.md    # frozen page-title spec
 ├── index.html                  # Vite entry
 ├── package.json
 ├── eslint.config.js
